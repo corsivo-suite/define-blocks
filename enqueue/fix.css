@@ -1,0 +1,39 @@
+.defb-block {
+	position: relative;
+}
+
+.defb-fields--flex {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+}
+
+.defb-fields--flex > .defb-field {
+	flex-shrink: 0;
+	min-width: 0;
+	box-sizing: border-box;
+}
+
+.defb-field {
+	margin-bottom: 12px;
+}
+
+.defb-media-field__preview img {
+	max-width: 100%;
+	height: auto;
+	border-radius: 4px;
+	margin-bottom: 8px;
+}
+
+.defb-media-field__actions {
+	display: flex;
+	gap: 8px;
+}
+
+.defb-field-title {
+	margin: 16px 0 8px;
+	font-size: 13px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+}

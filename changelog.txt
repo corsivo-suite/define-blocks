@@ -1,0 +1,32 @@
+= Non rilasciato — 1.1.0 =
+* Rigenerati i bundle contro i package condivisi correnti, includendo il refresh visuale e gli asset RTL; contratti runtime invariati.
+* I figli diretti dei repeater possono essere mostrati nell'header con inline => true, senza duplicazione nel corpo.
+* Gli item del repeater formano un elenco continuo senza ombre e usano icone outline.
+* Il registry dei field usa gli adapter di @corsivo-suite/wp-admin-ui e @corsivo-suite/wp-admin-maps mantenendo invariati schema, store e valori salvati.
+* Migrati i controlli riusabili, i selettori, media, gallery, colore, date/time, repeater e sortable; rimossi componenti e asset legacy sostituiti.
+* Le mappe separano query e indirizzo e supportano coordinate parziali, iframe, marker drag, reverse geocoding protetto e zoom con Ctrl + rotella.
+* Corrette le regressioni del porting e completate le stringhe localizzabili e accessibili.
+* Google Maps viene caricato dal loader condiviso senza un secondo script globale.
+* La distribuzione usa soltanto gli asset compilati del plugin; il sorgente usa i package privati @corsivo-suite/* alla versione esatta 0.1.0.
+* Versione PHP allineata e sanitizzazione dei colori alpha corretta.
+* Verificati 42 test Define Blocks e 135 test package, lint, build, PHP, package dry-run e runtime audit; i warning sulla dimensione dei bundle sono non bloccanti.
+* Restano da eseguire lo smoke Gutenberg con sessione autenticata e la validazione su WordPress 6.6 reale.
+
+= 1.0.8 — 16/07/2026 =
+* I meta saveInMeta non vengono più eliminati quando il relativo blocco non è presente nel documento.
+
+= 1.0.5 — 10/07/2026 =
+* Rimossi React Leaflet e Mapbox GL; le mappe usano Leaflet diretto mantenendo ricerca, pin trascinabile e geocoding.
+
+= 1.0.4 — 10/07/2026 =
+* Correzioni a compatibilità WordPress, preview, persistenza, REST, validazione, repeater, traduzioni e build.
+
+= 1.0.3 — 09/07/2026 =
+* Ripristinati i field geo avanzati e aggiornato il build editor.
+
+= 1.0.2 — 07/07/2026 =
+* Canale aggiornamenti su plugins.corsivo.dev.
+
+= 1.0.1 — 07/07/2026 =
+* Collegamento al canale di aggiornamento plugins.salvatorecorsi.dev, header uniformati (Requires at least / Requires PHP).
+

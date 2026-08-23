@@ -1,0 +1,76 @@
+@use "tokens" as t;
+@use "mixins" as m;
+
+.defb-block {
+
+	.components-input-control__backdrop {
+		border-color: t.$border-input !important;
+		border-radius: t.$radius;
+		transition: border-color t.$transition;
+	}
+
+	.components-input-control__container:focus-within .components-input-control__backdrop {
+		border-color: t.$accent !important;
+		box-shadow: 0 0 0 1px t.$accent;
+	}
+
+	.components-input-control__container .components-text-control__input,
+	.components-input-control__container select.components-select-control__input,
+	.components-input-control__container .components-combobox-control__input .components-input-control__input {
+		border: none;
+	}
+
+	textarea.components-textarea-control__input {
+		border: 1px solid t.$border-input;
+		border-radius: t.$radius;
+		background: t.$surface;
+		transition: border-color t.$transition;
+		min-height: 100px;
+		resize: vertical;
+
+		&:focus {
+
+			@include m.input-focus;
+		}
+	}
+
+	div[role="textbox"] {
+		border: 1px solid t.$border-input;
+		border-radius: t.$radius;
+		padding: 10px 12px;
+		min-height: 120px;
+		transition: border-color t.$transition;
+
+		&:focus {
+
+			@include m.input-focus;
+		}
+	}
+
+	.components-combobox-control {
+		position: relative;
+	}
+
+	.components-form-token-field__suggestions-list {
+		position: absolute;
+		z-index: 100;
+		top: 100%;
+		left: 0;
+		right: 0;
+		background: t.$surface;
+		border: 1px solid t.$border-input;
+		border-top: none;
+		border-radius: 0 0 t.$radius t.$radius;
+		max-height: 200px;
+		overflow-y: auto;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+	}
+
+	.components-color-palette__custom-color-wrapper {
+		margin-top: 8px;
+	}
+
+	.components-range-control__root {
+		margin-bottom: 0;
+	}
+}

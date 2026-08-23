@@ -1,0 +1,19 @@
+{
+  "extends": [
+    "plugin:@wordpress/eslint-plugin/recommended"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "**/*.test.js"
+      ],
+      "env": {
+        "jest": true
+      }
+    }
+  ],
+  "rules": {
+    "@wordpress/i18n-translator-comments": "off",
+    "prettier/prettier": "off"
+  }
+}

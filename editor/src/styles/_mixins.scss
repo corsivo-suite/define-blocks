@@ -1,0 +1,85 @@
+@use "tokens" as t;
+
+@mixin input-base {
+	border: 1px solid t.$border-input;
+	border-radius: t.$radius;
+	background: t.$surface;
+	transition: border-color t.$transition;
+}
+
+@mixin input-focus {
+	border-color: t.$accent;
+	box-shadow: 0 0 0 1px t.$accent;
+	outline: none;
+}
+
+@mixin label {
+	font-size: 11px;
+	font-weight: 400;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+@mixin dropdown {
+	position: absolute;
+	z-index: 100;
+	left: 0;
+	right: 0;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	background: t.$surface;
+	border: 1px solid t.$border-input;
+	border-top: none;
+	border-radius: 0 0 t.$radius t.$radius;
+	max-height: 200px;
+	overflow-y: auto;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+@mixin dropdown-item {
+	display: block;
+	width: 100%;
+	padding: 8px 12px;
+	border: none;
+	background: none;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+	transition: background t.$transition;
+
+	&:hover {
+		background: t.$surface-alt;
+	}
+}
+
+@mixin drag-handle {
+	cursor: grab;
+	font-size: 16px;
+	color: t.$text-muted;
+	line-height: 1;
+	user-select: none;
+
+	&:active {
+		cursor: grabbing;
+	}
+}
+
+@mixin truncate {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+@mixin visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}

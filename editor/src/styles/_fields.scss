@@ -1,0 +1,88 @@
+@use "tokens" as t;
+@use "mixins" as m;
+
+.defb-field {
+	margin-bottom: 16px;
+	width: 100%;
+
+	&:last-child {
+		margin-bottom: 0;
+	}
+}
+
+.defb-fields--flex {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+
+	> .defb-field {
+		flex-shrink: 0;
+		min-width: 0;
+		box-sizing: border-box;
+		margin-bottom: 0;
+	}
+}
+
+.defb-block .components-base-control__label,
+.defb-block label.components-input-control__label,
+.defb-block .components-toggle-control__label {
+
+	@include m.label;
+	color: t.$text-muted;
+	margin-bottom: 4px;
+}
+
+.defb-block .components-base-control__help {
+	font-size: 12px;
+	color: t.$text-muted;
+	margin-top: 4px;
+}
+
+.defb-block .defb-field--error {
+
+	input.components-text-control__input,
+	select.components-select-control__input,
+	.components-input-control__backdrop {
+		border-color: t.$error !important;
+	}
+
+	input.components-text-control__input:focus,
+	select.components-select-control__input:focus,
+	.components-input-control__container:focus-within .components-input-control__backdrop {
+		border-color: t.$error !important;
+		box-shadow: 0 0 0 1px t.$error;
+	}
+
+	textarea.components-textarea-control__input {
+		border-color: t.$error !important;
+
+		&:focus {
+			border-color: t.$error !important;
+			box-shadow: 0 0 0 1px t.$error;
+		}
+	}
+
+	div[role="textbox"] {
+		border-color: t.$error !important;
+
+		&:focus {
+			border-color: t.$error !important;
+			box-shadow: 0 0 0 1px t.$error;
+		}
+	}
+}
+
+.defb-field__error {
+	font-size: 12px;
+	color: t.$error;
+	margin: 4px 0 0;
+}
+
+.defb-field-title {
+	margin: 16px 0 8px;
+	padding-bottom: 6px;
+	border-bottom: 1px solid t.$border;
+
+	@include m.label;
+	color: t.$text-muted;
+}

@@ -1,0 +1,21 @@
+{
+  "editor/src/block/BlockPreview.jsx": "editor/build/index.js",
+  "editor/src/block/Edit.jsx": "editor/build/index.js",
+  "editor/src/engine/validation.js": "editor/build/index.js",
+  "editor/src/fields/adapters/ChipsField.jsx": "editor/build/index.js",
+  "editor/src/fields/adapters/ColorField.jsx": "editor/build/index.js",
+  "editor/src/fields/adapters/control-i18n.js": "editor/build/index.js",
+  "editor/src/fields/adapters/DateTimeField.jsx": "editor/build/index.js",
+  "editor/src/fields/adapters/FileField.jsx": "editor/build/index.js",
+  "editor/src/fields/adapters/GalleryField.jsx": "editor/build/index.js",
+  "editor/src/fields/adapters/GeocoderField.jsx": "editor/build/index.js",
+  "editor/src/fields/adapters/LinkField.jsx": "editor/build/index.js",
+  "editor/src/fields/adapters/MapField.jsx": "editor/build/index.js",
+  "editor/src/fields/adapters/MediaField.jsx": "editor/build/index.js",
+  "editor/src/fields/adapters/PostSelectorField.jsx": "editor/build/index.js",
+  "editor/src/fields/adapters/RepeaterField.jsx": "editor/build/index.js",
+  "editor/src/fields/adapters/TaxonomyField.jsx": "editor/build/index.js",
+  "editor/src/fields/adapters/VideoField.jsx": "editor/build/index.js",
+  "editor/src/fields/types/Select.jsx": "editor/build/index.js",
+  "editor/build/index.js": "editor/build/index.js"
+}

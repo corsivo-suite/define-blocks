@@ -1,0 +1,14 @@
+.git
+.github
+.gitignore
+.distignore
+editor/.eslintrc.json
+editor/.prettierrc.json
+editor/node_modules
+editor/package.json
+editor/package-lock.json
+editor/src
+tests
+**/*.test.js
+**/*.test.jsx
+**/*.map

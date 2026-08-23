@@ -1,0 +1,23 @@
+$border: #ddd;
+$border-input: #8c8f94;
+$accent: var(--wp-admin-theme-color, #3858e9);
+$surface: #fff;
+$surface-alt: #f0f0f0;
+$text: #1e1e1e;
+$text-muted: #757575;
+$radius: 2px;
+$error: #cc1818;
+$transition: 120ms ease;
+
+.defb-block {
+	--defb-border: #{$border};
+	--defb-border-input: #{$border-input};
+	--defb-accent: #{$accent};
+	--defb-surface: #{$surface};
+	--defb-surface-alt: #{$surface-alt};
+	--defb-text: #{$text};
+	--defb-text-muted: #{$text-muted};
+	--defb-radius: #{$radius};
+	--defb-error: #{$error};
+	--defb-transition: #{$transition};
+}

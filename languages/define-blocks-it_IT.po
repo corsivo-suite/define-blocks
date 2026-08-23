@@ -1,0 +1,474 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Define Blocks 1.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/define-blocks\n"
+"Last-Translator: Salvatore Corsi <info@salvatorecorsi.com>\n"
+"Language-Team: Italian\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-08-20T11:49:13+00:00\n"
+"PO-Revision-Date: 2026-08-20 13:49+0200\n"
+"Language: it_IT\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: define-blocks\n"
+
+#. Plugin Name of the plugin
+#: define-blocks.php
+msgid "Define Blocks"
+msgstr "Define Blocks"
+
+#. Plugin URI of the plugin
+#: define-blocks.php
+msgid "https://github.com/salvatorecorsi/define-blocks"
+msgstr "https://github.com/salvatorecorsi/define-blocks"
+
+#. Description of the plugin
+#: define-blocks.php
+msgid "Define native blocks with pure PHP."
+msgstr "Definisci blocchi nativi con puro PHP."
+
+#. Author of the plugin
+#: define-blocks.php
+msgid "Salvatore Corsi"
+msgstr "Salvatore Corsi"
+
+#. Author URI of the plugin
+#: define-blocks.php
+msgid "https://salvatorecorsi.com"
+msgstr "https://salvatorecorsi.com"
+
+#: includes/api.php:19
+msgid "You do not have permission to edit this post."
+msgstr "Non hai i permessi per modificare questo contenuto."
+
+#: includes/api.php:26
+msgid "Insufficient permissions."
+msgstr "Permessi insufficienti."
+
+#: includes/api.php:46
+#: includes/api.php:170
+#: includes/api.php:228
+msgid "Post not found."
+msgstr "Contenuto non trovato."
+
+#: includes/api.php:89
+#: includes/api.php:117
+msgid "Invalid post type."
+msgstr "Tipo di contenuto non valido."
+
+#: includes/api.php:212
+msgid "Block not found."
+msgstr "Blocco non trovato."
+
+#: includes/api.php:256
+msgid "Render failed."
+msgstr "Rendering fallito."
+
+#: includes/register.php:179
+msgid "Panel"
+msgstr "Pannello"
+
+#: includes/api.php:145
+msgid "This meta field is not available."
+msgstr "Questo campo meta non è disponibile."
+
+#: includes/api.php:159
+msgid "You do not have permission to read this post."
+msgstr "Non hai i permessi per leggere questo contenuto."
+
+#: editor/src/fields/adapters/GeocoderField.jsx:136
+#: editor/src/fields/adapters/MapField.jsx:37
+msgid "Reverse geocoding failed."
+msgstr "Geocodifica inversa non riuscita."
+
+#: editor/src/fields/adapters/MapField.jsx:29
+#: editor/src/fields/adapters/MapField.jsx:243
+msgid "Map"
+msgstr "Mappa"
+
+#: editor/src/fields/adapters/GeocoderField.jsx:128
+#: editor/src/fields/adapters/MapField.jsx:32
+msgid "Search address…"
+msgstr "Cerca indirizzo…"
+
+#: editor/src/fields/adapters/GeocoderField.jsx:137
+#: editor/src/fields/adapters/MapField.jsx:38
+msgid "Address"
+msgstr "Indirizzo"
+
+#: editor/src/fields/adapters/DateTimeField.jsx:10
+msgid "Select date"
+msgstr "Seleziona data"
+
+#: editor/src/fields/adapters/DateTimeField.jsx:14
+msgid "Select time"
+msgstr "Seleziona ora"
+
+#: editor/src/fields/adapters/DateTimeField.jsx:17
+msgid "Select date and time"
+msgstr "Seleziona data e ora"
+
+#: editor/src/fields/adapters/GalleryField.jsx:25
+msgid "Remove image"
+msgstr "Rimuovi immagine"
+
+#: editor/src/fields/adapters/control-i18n.js:4
+#: editor/src/fields/adapters/RepeaterField.jsx:32
+#, js-format
+msgid "Remove %s"
+msgstr "Rimuovi %s"
+
+#: editor/src/fields/adapters/ChipsField.jsx:32
+#: editor/src/fields/adapters/TaxonomyField.jsx:137
+msgid "Create"
+msgstr "Crea"
+
+#: editor/src/fields/adapters/RepeaterField.jsx:84
+#, js-format
+msgid "Item %d"
+msgstr "Elemento %d"
+
+#: editor/src/fields/adapters/control-i18n.js:60
+#: editor/src/fields/adapters/FileField.jsx:24
+#: editor/src/fields/adapters/MediaField.jsx:64
+msgid "Remove"
+msgstr "Rimuovi"
+
+#: editor/src/fields/adapters/GeocoderField.jsx:101
+#: editor/src/fields/adapters/MapField.jsx:226
+#, js-format
+msgid "API key missing. Add it via the %s filter."
+msgstr "Chiave API mancante. Aggiungila tramite il filtro %s."
+
+#: editor/src/fields/adapters/GeocoderField.jsx:138
+#: editor/src/fields/adapters/MapField.jsx:39
+msgid "Latitude"
+msgstr "Latitudine"
+
+#: editor/src/fields/adapters/GeocoderField.jsx:139
+#: editor/src/fields/adapters/MapField.jsx:40
+msgid "Longitude"
+msgstr "Longitudine"
+
+#: editor/src/fields/types/Select.jsx:30
+msgid "— Select —"
+msgstr "— Seleziona —"
+
+#: editor/src/fields/adapters/LinkField.jsx:44
+msgid "Link text"
+msgstr "Testo del link"
+
+#: editor/src/fields/adapters/LinkField.jsx:45
+msgid "Open in new tab"
+msgstr "Apri in una nuova scheda"
+
+#: editor/src/fields/adapters/MediaField.jsx:40
+#, js-format
+msgid "%s — Focus"
+msgstr "%s — Punto focale"
+
+#: editor/src/fields/adapters/FileField.jsx:23
+#: editor/src/fields/adapters/MediaField.jsx:63
+msgid "Replace"
+msgstr "Sostituisci"
+
+#: editor/src/fields/adapters/MediaField.jsx:62
+msgid "Select Image"
+msgstr "Seleziona immagine"
+
+#: editor/src/fields/adapters/FileField.jsx:22
+msgid "Select File"
+msgstr "Seleziona file"
+
+#: editor/src/fields/adapters/GalleryField.jsx:23
+msgid "Add Images"
+msgstr "Aggiungi immagini"
+
+#: editor/src/fields/adapters/VideoField.jsx:15
+msgid "Video preview"
+msgstr "Anteprima video"
+
+#: editor/src/fields/adapters/RepeaterField.jsx:193
+msgid "Add Item"
+msgstr "Aggiungi elemento"
+
+#: editor/src/fields/adapters/PostSelectorField.jsx:33
+msgid "Search posts…"
+msgstr "Cerca contenuti…"
+
+#: editor/src/fields/adapters/TaxonomyField.jsx:86
+#: editor/src/fields/adapters/TaxonomyField.jsx:115
+msgid "Could not load the terms."
+msgstr "Impossibile caricare i termini."
+
+#: editor/src/fields/adapters/TaxonomyField.jsx:197
+msgid "Could not create the term."
+msgstr "Impossibile creare il termine."
+
+#: editor/src/block/BlockPreview.jsx:57
+msgid "The preview request failed."
+msgstr "La richiesta di anteprima non è riuscita."
+
+#: editor/src/block/BlockPreview.jsx:84
+#: editor/src/block/BlockPreview.jsx:100
+msgid "Back to editor"
+msgstr "Torna all’editor"
+
+#: editor/src/block/BlockPreview.jsx:94
+msgid "This block returned empty output."
+msgstr "Questo blocco ha restituito un output vuoto."
+
+#: editor/src/block/Edit.jsx:75
+msgid "Editor"
+msgstr "Editor"
+
+#: editor/src/block/Edit.jsx:75
+msgid "Preview"
+msgstr "Anteprima"
+
+#: editor/src/block/Edit.jsx:85
+msgid "Expand"
+msgstr "Espandi"
+
+#: editor/src/block/Edit.jsx:85
+msgid "Collapse"
+msgstr "Comprimi"
+
+#: editor/src/fields/adapters/ColorField.jsx:31
+msgid "Choose a color"
+msgstr "Scegli un colore"
+
+#: editor/src/fields/adapters/ColorField.jsx:32
+msgid "Choose a custom color"
+msgstr "Scegli un colore personalizzato"
+
+#: editor/src/fields/adapters/ColorField.jsx:33
+msgid "No color"
+msgstr "Nessun colore"
+
+#: editor/src/fields/adapters/ColorField.jsx:34
+msgid "Clear color"
+msgstr "Cancella colore"
+
+#: editor/src/fields/adapters/DateTimeField.jsx:55
+msgid "Time"
+msgstr "Ora"
+
+#: editor/src/fields/adapters/DateTimeField.jsx:56
+msgid "Clear"
+msgstr "Cancella"
+
+#: editor/src/fields/adapters/GalleryField.jsx:24
+msgid "Edit Gallery"
+msgstr "Modifica galleria"
+
+#: editor/src/fields/adapters/GalleryField.jsx:26
+msgid "No images selected."
+msgstr "Nessuna immagine selezionata."
+
+#: editor/src/fields/adapters/GalleryField.jsx:27
+msgid "Gallery images"
+msgstr "Immagini della galleria"
+
+#: editor/src/fields/adapters/GeocoderField.jsx:129
+#: editor/src/fields/adapters/MapField.jsx:33
+msgid "Searching addresses"
+msgstr "Ricerca indirizzi in corso"
+
+#: editor/src/fields/adapters/GeocoderField.jsx:130
+#: editor/src/fields/adapters/MapField.jsx:34
+msgid "No addresses found."
+msgstr "Nessun indirizzo trovato."
+
+#: editor/src/fields/adapters/GeocoderField.jsx:131
+#: editor/src/fields/adapters/MapField.jsx:35
+msgid "Address search failed."
+msgstr "Ricerca dell’indirizzo non riuscita."
+
+#: editor/src/fields/adapters/GeocoderField.jsx:132
+#: editor/src/fields/adapters/MapField.jsx:36
+msgid "Type at least 2 characters to search."
+msgstr "Digita almeno 2 caratteri per cercare."
+
+#: editor/src/fields/adapters/GeocoderField.jsx:140
+#: editor/src/fields/adapters/MapField.jsx:41
+msgid "Clear location"
+msgstr "Cancella posizione"
+
+#: editor/src/fields/adapters/LinkField.jsx:43
+msgid "URL"
+msgstr "URL"
+
+#: editor/src/fields/adapters/MapField.jsx:30
+msgid "Loading map"
+msgstr "Caricamento mappa"
+
+#: editor/src/fields/adapters/MapField.jsx:31
+msgid "The map could not be loaded."
+msgstr "Impossibile caricare la mappa."
+
+#: editor/src/fields/adapters/MapField.jsx:136
+msgid "This map style is not supported. The default Mapbox style is being used."
+msgstr "Questo stile della mappa non è supportato. Verrà utilizzato lo stile Mapbox predefinito."
+
+#: editor/src/fields/adapters/MapField.jsx:143
+msgid "Map tiles could not be loaded. Check the provider configuration."
+msgstr "Impossibile caricare le tile della mappa. Verifica la configurazione del provider."
+
+#: editor/src/fields/adapters/RepeaterField.jsx:23
+#, js-format
+msgid "Expand %s"
+msgstr "Espandi %s"
+
+#: editor/src/fields/adapters/RepeaterField.jsx:26
+#, js-format
+msgid "Collapse %s"
+msgstr "Comprimi %s"
+
+#: editor/src/fields/adapters/RepeaterField.jsx:29
+#, js-format
+msgid "Duplicate %s"
+msgstr "Duplica %s"
+
+#: editor/src/fields/adapters/RepeaterField.jsx:194
+msgid "No items."
+msgstr "Nessun elemento."
+
+#: editor/src/fields/adapters/RepeaterField.jsx:195
+msgid "Repeater items"
+msgstr "Elementi del repeater"
+
+#: editor/src/engine/validation.js:45
+msgid "This field is required"
+msgstr "Questo campo è obbligatorio"
+
+#: editor/src/engine/validation.js:50
+#, js-format
+msgid "Minimum %d items"
+msgstr "Minimo %d elementi"
+
+#: editor/src/engine/validation.js:53
+#, js-format
+msgid "Maximum %d items"
+msgstr "Massimo %d elementi"
+
+#: editor/src/engine/validation.js:65
+#, js-format
+msgid "Minimum %d characters"
+msgstr "Minimo %d caratteri"
+
+#: editor/src/engine/validation.js:68
+#, js-format
+msgid "Maximum %d characters"
+msgstr "Massimo %d caratteri"
+
+#: editor/src/engine/validation.js:75
+msgid "Invalid format"
+msgstr "Formato non valido"
+
+#: editor/src/engine/validation.js:82
+#, js-format
+msgid "Minimum value is %s"
+msgstr "Il valore minimo è %s"
+
+#: editor/src/engine/validation.js:85
+#, js-format
+msgid "Maximum value is %s"
+msgstr "Il valore massimo è %s"
+
+#: editor/src/fields/adapters/control-i18n.js:7
+#, js-format
+msgid "Reorder %s"
+msgstr "Riordina %s"
+
+#: editor/src/fields/adapters/control-i18n.js:9
+msgid "To pick up an item, press space or enter. Use the arrow keys to move it, press space or enter to drop it, or press escape to cancel."
+msgstr "Per selezionare un elemento, premi spazio o invio. Usa i tasti freccia per spostarlo, premi spazio o invio per rilasciarlo oppure premi Esc per annullare."
+
+#: editor/src/fields/adapters/control-i18n.js:16
+#, js-format
+msgid "Picked up %s."
+msgstr "Hai selezionato %s."
+
+#: editor/src/fields/adapters/control-i18n.js:20
+#, js-format
+msgid "%s is no longer over a drop target."
+msgstr "%s non si trova più sopra un’area di rilascio."
+
+#: editor/src/fields/adapters/control-i18n.js:24
+#, js-format
+msgid "%1$s is over position %2$d of %3$d."
+msgstr "%1$s si trova sopra la posizione %2$d di %3$d."
+
+#: editor/src/fields/adapters/control-i18n.js:32
+#, js-format
+msgid "%s was dropped without moving."
+msgstr "%s è stato rilasciato senza essere spostato."
+
+#: editor/src/fields/adapters/control-i18n.js:36
+#, js-format
+msgid "Dropped %1$s at position %2$d of %3$d."
+msgstr "%1$s è stato rilasciato alla posizione %2$d di %3$d."
+
+#: editor/src/fields/adapters/control-i18n.js:42
+#, js-format
+msgid "Moving %s was cancelled."
+msgstr "Lo spostamento di %s è stato annullato."
+
+#: editor/src/fields/adapters/control-i18n.js:47
+#: editor/src/fields/adapters/control-i18n.js:68
+msgid "Search…"
+msgstr "Cerca…"
+
+#: editor/src/fields/adapters/control-i18n.js:48
+msgid "No results found."
+msgstr "Nessun risultato trovato."
+
+#: editor/src/fields/adapters/control-i18n.js:49
+msgid "Loading results…"
+msgstr "Caricamento risultati…"
+
+#: editor/src/fields/adapters/control-i18n.js:50
+msgid "Unable to load results."
+msgstr "Impossibile caricare i risultati."
+
+#: editor/src/fields/adapters/control-i18n.js:54
+#: editor/src/fields/adapters/control-i18n.js:79
+#, js-format
+msgid "Type at least %d characters to search."
+msgstr "Digita almeno %d caratteri per cercare."
+
+#: editor/src/fields/adapters/control-i18n.js:57
+#: editor/src/fields/adapters/control-i18n.js:82
+msgid "Type more characters to search."
+msgstr "Digita altri caratteri per cercare."
+
+#: editor/src/fields/adapters/control-i18n.js:58
+msgid "Clear selection"
+msgstr "Cancella selezione"
+
+#: editor/src/fields/adapters/control-i18n.js:59
+msgid "Selected items"
+msgstr "Elementi selezionati"
+
+#: editor/src/fields/adapters/control-i18n.js:67
+msgid "Search content"
+msgstr "Cerca contenuti"
+
+#: editor/src/fields/adapters/control-i18n.js:71
+#, js-format
+msgid "No %s found."
+msgstr "Nessun %s trovato."
+
+#: editor/src/fields/adapters/control-i18n.js:72
+msgid "links"
+msgstr "link"
+
+#: editor/src/fields/adapters/control-i18n.js:74
+msgid "Searching links…"
+msgstr "Ricerca link in corso…"
+
+#: editor/src/fields/adapters/control-i18n.js:75
+msgid "Unable to search links."
+msgstr "Impossibile cercare i link."

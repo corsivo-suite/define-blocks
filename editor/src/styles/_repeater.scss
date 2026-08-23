@@ -1,0 +1,57 @@
+@use "mixins" as m;
+
+.defb-repeater {
+
+	.corsivo-admin-ui-repeater__summary:empty {
+		display: none;
+	}
+
+	.corsivo-admin-ui-repeater__inline {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+}
+
+.defb-repeater-item__inline-field {
+	display: flex;
+	align-items: center;
+	flex: 0 1 auto;
+	min-width: 0;
+	width: auto;
+	margin-bottom: 0;
+
+	.components-base-control,
+	.components-base-control__field {
+		margin-bottom: 0;
+	}
+
+	.components-base-control__label,
+	label.components-input-control__label,
+	.components-toggle-control__label {
+
+		@include m.visually-hidden;
+	}
+
+	.components-base-control__help {
+		display: none;
+	}
+
+	.components-input-control__backdrop {
+		border-color: transparent !important;
+		box-shadow: none;
+	}
+
+	&[data-field-type="text"],
+	&[data-field-type="number"],
+	&[data-field-type="text-with-parser"],
+	&[data-field-type="url"],
+	&[data-field-type="select"],
+	&[data-field-type="autocomplete"] {
+		flex: 1 1 120px;
+
+		> .components-base-control {
+			width: 100%;
+		}
+	}
+}
