@@ -1,3 +1,5 @@
+import { createElement, lazy, Suspense } from '@wordpress/element';
+import { Spinner } from '@wordpress/components';
 import TextInput from './types/TextInput';
 import Textarea from './types/Textarea';
 import RichText from './types/RichText';
@@ -20,12 +22,6 @@ import File from './adapters/FileField';
 import Gallery from './adapters/GalleryField';
 import Autocomplete from './adapters/AutocompleteField';
 import MultiAutocomplete from './adapters/MultiAutocompleteField';
-import Chips from './adapters/ChipsField';
-import PostSelector from './adapters/PostSelectorField';
-import Taxonomy from './adapters/TaxonomyField';
-import Repeater from './adapters/RepeaterField';
-import MapField from './adapters/MapField';
-import Geocoder from './adapters/GeocoderField';
 import ToolbarToggle from './types/ToolbarToggle';
 import ToolbarSelect from './types/ToolbarSelect';
 import ToolbarDropdown from './types/ToolbarDropdown';
@@ -33,6 +29,23 @@ import ToolbarInput from './types/ToolbarInput';
 import ToolbarAutocomplete from './types/ToolbarAutocomplete';
 import { resolveFieldComponent } from './registry-resolver';
 
+function lazyField( loader, handlesError = false ) {
+	const Component = lazy( loader );
+	const LazyField = ( props ) => createElement(
+		Suspense,
+		{ fallback: createElement( Spinner ) },
+		createElement( Component, props )
+	);
+	LazyField.handlesError = handlesError;
+	return LazyField;
+}
+
+const Chips = lazyField( () => import( './adapters/ChipsField' ), true );
+const PostSelector = lazyField( () => import( './adapters/PostSelectorField' ), true );
+const Taxonomy = lazyField( () => import( './adapters/TaxonomyField' ), true );
+const Repeater = lazyField( () => import( './adapters/RepeaterField' ) );
+const MapField = lazyField( () => import( './adapters/MapField' ), true );
+const Geocoder = lazyField( () => import( './adapters/GeocoderField' ), true );
 const FIELD_COMPONENTS = {
 	text: TextInput,
 	'text-with-parser': TextInput,

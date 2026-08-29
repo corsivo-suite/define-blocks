@@ -5,7 +5,6 @@ import Edit from './block/Edit';
 import { setupRuntime } from './engine/runtime';
 import { schemaHasFieldType } from './engine/schema';
 import '@corsivo-suite/wp-admin-ui/styles.css';
-import '@corsivo-suite/wp-admin-maps/leaflet.css';
 import './styles/index.scss';
 
 setupRuntime();

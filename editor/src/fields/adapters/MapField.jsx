@@ -9,6 +9,7 @@ import { InspectorControls } from "@wordpress/block-editor";
 import { BaseControl, Notice, PanelBody } from "@wordpress/components";
 import { __, sprintf } from "@wordpress/i18n";
 import { GeocoderControl, MapCanvas } from "@corsivo-suite/wp-admin-maps";
+import "@corsivo-suite/wp-admin-maps/leaflet.css";
 import {
   createFieldGeocoder,
   createFieldRenderer,
