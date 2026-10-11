@@ -1,6 +1,61 @@
 # Changelog
 
-## Non rilasciato — Versione 1.1.0
+## 2026-10-11 — Non rilasciato: Correzioni della review
+
+### Richiesta
+Correggere tutti i sette problemi rilevati nella review del plugin e pubblicare le correzioni nel repository remoto.
+
+### Modifiche effettuate
+- `editor/src/fields/adapters/RepeaterField.jsx`: aggiornamenti asincroni delle mappe applicati alla riga corrente, conservando modifiche concorrenti e riordinamenti e ignorando le righe rimosse.
+- `includes/conditions.php`: condizioni numeriche coerenti fra PHP ed editor per valori assenti, nulli e vuoti.
+- `editor/src/index.js`, `editor/src/fields/adapters/MapField.jsx`: CSS delle mappe incluso nell'asset principale disponibile nell'iframe; JavaScript delle mappe mantenuto lazy.
+- `editor/src/fields/types/TabPanels.jsx`: InnerBlocks mantenuto montato anche nelle tab inattive, per inizializzare il template senza aprire la tab.
+- `includes/api.php`: preview tramite pipeline nativa di rendering, con applicazione dei filtri finali e conservazione del markup richtext consentito nel contesto ereditato.
+- `editor/src/fields/types/ToolbarSelect.jsx`: select con `postType` nella toolbar collegato alla ricerca dei post esistente.
+- `editor/src/fields/adapters/RepeaterField.test.jsx`, `editor/src/fields/adapters/MapField.test.jsx`, `editor/src/fields/types/TabPanels.test.jsx`, `editor/src/fields/types/ToolbarSelect.test.jsx`, `editor/src/engine/conditions.test.js`, `tests/php/values.php`, `tests/php/registration.php`: regressioni sui comportamenti corretti e sul contratto delle condizioni JavaScript.
+
+### Note
+Superati 110 test JavaScript in 30 suite e 46 test PHP su ciascuna versione 8.1.31 e 8.4.0. Sintassi dei 23 file PHP verificata su entrambe le versioni; lint JavaScript/SCSS e build completati. Rigenerati 11 asset; verificata la presenza del CSS Leaflet e MapCanvas in `index.css` e `index-rtl.css`, unici CSS della build. Webpack segnala soltanto il consueto avviso informativo sulla dimensione dell'entrypoint.
+
+---
+
+## 2026-09-25 — Non rilasciato: Autorizzazioni della preview REST
+
+### Richiesta
+Correggere i rilievi verificati della review della suite Corsivo, preservando le modifiche preesistenti e i contratti intenzionali.
+
+### Modifiche effettuate
+- `includes/api.php`: preview limitata a utenti che possono modificare contenuti, post type ammessi e oggetti leggibili.
+- `tests/php/preview-permissions.php`: regressioni su clienti WooCommerce, coupon e permessi sul singolo oggetto.
+
+### Note
+Regressioni isolate superate su PHP 8.1 e 8.4. API pubbliche e canale di aggiornamento privato conservati; preparazione WordPress.org fuori da questa correzione.
+
+---
+
+
+## 2026-09-05 — In sviluppo
+
+- Rafforzati i contratti dei valori approvati dopo l'audit: normalizzazione prima della validazione, controlli coerenti tra salvataggio e REST, autorizzazione `edit_post_meta` per chiave e compatibilità con salvataggi programmatici senza utente.
+- Applicati ricorsivamente i default alle righe repeater nuove ed esistenti, mantenendo valori espliciti, chiavi sconosciute e identità delle righe; i campi numerici conservano il tipo durante le modifiche.
+- Aggiunti `parent`, `ancestor`, `usesContext` e `providesContext` alla dichiarazione PHP, usando le API native Gutenberg. I custom field ricevono il contesto ereditato.
+- Aggiunta diagnostica dello schema con `WP_DEBUG`, nome del blocco e percorso del campo, compatibile con estensioni e tipi personalizzati.
+- Allineati schema e contesto fra frontend, Read API e anteprima. Mantenuti callback espliciti, file, funzione inferita a render-time e fallback InnerBlocks, senza obbligo di renderer nel tema.
+- Spostata la validazione dei figli sul documento e mantenuta l'inizializzazione InnerBlocks in anteprima e nei contenitori chiusi.
+- Ridotti i render dei campi indipendenti e le richieste di anteprima; conservato l'ultimo HTML durante l'aggiornamento e ignorate le risposte obsolete.
+- Separati gli ID DOM dai nomi dei campi e corrette le creazioni asincrone concorrenti delle tassonomie.
+- Sostituito l'autocomplete Nominatim pubblico con ricerca esplicita, cache e coda condivisa nella pagina; resi configurabili gli endpoint di ricerca e reverse.
+- Corretti i selettori CSS della preview con radici multiple, stringhe quotate e commenti. Aggiornata la documentazione e le traduzioni italiane.
+
+### Verifiche
+
+- 87 test JavaScript in 27 suite; 38 contratti PHP su ciascuna versione 8.1 e 8.4. I test nativi usano parser, registry, rendering e contesto reali del checkout WordPress, con persistenza isolata in memoria.
+- Lint JavaScript/SCSS e lint dei 22 file PHP superati; bundle di distribuzione rigenerato correttamente.
+- Le verifiche non avviano il sito e non modificano il database.
+
+---
+
+## 2026-08-29 — Versione 1.1.0
 
 - Rigenerati i bundle contro i package condivisi correnti, includendo il refresh visuale e gli asset RTL; contratti runtime invariati.
 - Aggiunto `inline => true` ai figli diretti dei repeater per renderli nell'header senza duplicarli nel corpo espanso.
@@ -14,12 +69,17 @@
 - Demandato al loader del package il caricamento di Google Maps, eliminando il secondo script globale dell'editor.
 - Mantenuta la distribuzione autonoma del plugin tramite gli asset compilati in `editor/build`, senza dipendenze runtime dal monorepo Corsivo; il sorgente usa i package privati `@corsivo-suite/*` alla versione esatta `0.1.0`.
 - Allineati header e costante del plugin alla versione `1.1.0`; i colori alpha sono ora preservati dalla sanitizzazione PHP.
+- Caricati in chunk asincroni i field pesanti e il CSS Leaflet, mantenendo invariati registry, schema e formati salvati.
+- Sostituito il caricamento completo delle tassonomie con ricerca REST paginata, percorsi gerarchici e idratazione a batch delle selezioni correnti.
+- Mantenute esatte le chiavi `saveInMeta` mixed-case in salvataggio, lettura e scrittura REST.
+- Isolate le eccezioni di render dei field lazy con fallback locale e action diagnostica `defb.fieldRenderError`.
+- Aggiunta CI push/PR su PHP 8.1/8.4 e Node 20 con lint, test, build verificata e pacchetto installabile.
 
 ### Verifiche
 
-- 42 test Define Blocks e 135 test dei package completati; lint JavaScript/SCSS, build, lint PHP, package dry-run e runtime audit verdi.
+- 46 test JavaScript, 6 contratti PHP/REST e 135 test dei package completati; lint JavaScript/SCSS, build, lint PHP, package dry-run e runtime audit verdi.
 - I warning sulla dimensione dei bundle Define Blocks e showcase sono non bloccanti.
-- Lo smoke test Gutenberg nel browser non è stato eseguito perché non era disponibile una sessione WordPress autenticata; resta da validare il plugin su un'installazione reale WordPress 6.6.
+- Completato lo smoke test Gutenberg autenticato su un'installazione reale mantenendo invariato il registry dei blocchi.
 
 ---
 

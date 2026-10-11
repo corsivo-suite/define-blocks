@@ -6,7 +6,7 @@ import { mergeLinkChange, normalizeLinkValue } from "./value-contracts";
 import { loadPostOptions } from "./post-options";
 
 export default function LinkField({
-  name,
+  id,
   field,
   value,
   onChange,
@@ -32,7 +32,7 @@ export default function LinkField({
 
   return (
     <LinkControl
-      id={name}
+      id={id}
       label={field.label}
       help={field.description}
       error={error}

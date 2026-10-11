@@ -3,12 +3,12 @@ import { FileControl } from '@corsivo-suite/wp-admin-ui/file-control';
 import { renderWordPressMediaPicker } from './media-picker';
 import { normalizeMediaValue } from './value-contracts';
 
-export default function FileField( { name, field, value, onChange, onBlur } ) {
+export default function FileField( { id, field, value, onChange, onBlur } ) {
 	const file = value && typeof value === 'object' && Object.keys( value ).length ? value : null;
 
 	return (
 		<FileControl
-			id={ name }
+			id={ id }
 			label={ field.label }
 			help={ field.description }
 			value={ file }

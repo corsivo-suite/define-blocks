@@ -10,7 +10,7 @@ import {
 } from "./value-contracts";
 
 export default function ChipsField({
-  name,
+  id,
   field,
   value,
   onChange,
@@ -35,7 +35,7 @@ export default function ChipsField({
 
   return (
     <CreatableSortableMultiSelect
-      id={name}
+      id={id}
       label={field.label}
       help={field.description}
       error={error}

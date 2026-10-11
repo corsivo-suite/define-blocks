@@ -7,7 +7,7 @@ import {
 } from "@wordpress/element";
 import { BaseControl, Notice } from "@wordpress/components";
 import { __, sprintf } from "@wordpress/i18n";
-import { GeocoderControl } from "@corsivo-suite/wp-admin-maps";
+import FieldGeocoderControl from "./FieldGeocoderControl";
 import {
   createFieldGeocoder,
   getMapProvider,
@@ -20,7 +20,7 @@ import {
 } from "./value-contracts";
 
 export default function GeocoderField({
-  name,
+  id,
   field,
   type,
   value,
@@ -31,7 +31,7 @@ export default function GeocoderField({
   const googleMapsKey = window.defineBlocks?.keys?.googleMaps;
   const mapboxKey = window.defineBlocks?.keys?.mapbox;
   const apiKey = provider === "google" ? googleMapsKey : mapboxKey;
-  const { geocodingOptions, language, loaderOptions, reverseGeocodingOptions } =
+  const { geocodingOptions, language, loaderOptions, reverseGeocodingOptions, searchEndpoint, reverseEndpoint } =
     field;
   const location = useMemo(() => toSemanticLocation(value), [value]);
   const savedQuery = useMemo(() => {
@@ -51,8 +51,10 @@ export default function GeocoderField({
       language,
       loaderOptions,
       reverseGeocodingOptions,
+      searchEndpoint,
+      reverseEndpoint,
     }),
-    [geocodingOptions, language, loaderOptions, reverseGeocodingOptions],
+    [geocodingOptions, language, loaderOptions, reverseGeocodingOptions, searchEndpoint, reverseEndpoint],
   );
   const providerKeys = useMemo(
     () => ({
@@ -95,7 +97,7 @@ export default function GeocoderField({
     const filterName =
       provider === "google" ? "defb_google_maps_key" : "defb_mapbox_key";
     return (
-      <BaseControl id={name} label={field.label} help={field.description}>
+      <BaseControl id={id} label={field.label} help={field.description}>
         <Notice status="error" isDismissible={false}>
           {sprintf(
             __("API key missing. Add it via the %s filter.", "define-blocks"),
@@ -112,8 +114,8 @@ export default function GeocoderField({
   }
 
   return (
-    <GeocoderControl
-      id={name}
+    <FieldGeocoderControl
+      id={id}
       label={field.label}
       help={field.description}
       error={error}

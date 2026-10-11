@@ -6,7 +6,7 @@ import { MediaControl } from '@corsivo-suite/wp-admin-ui/media-control';
 import { renderWordPressMediaPicker } from './media-picker';
 import { normalizeMediaValue } from './value-contracts';
 
-export default function MediaField( { name, field, value, onChange, onBlur } ) {
+export default function MediaField( { id, name, field, value, onChange, onBlur } ) {
 	const media = value && typeof value === 'object' && Object.keys( value ).length
 		? {
 			...normalizeMediaValue( value ),
@@ -51,7 +51,7 @@ export default function MediaField( { name, field, value, onChange, onBlur } ) {
 				</InspectorControls>
 			) }
 			<MediaControl
-				id={ name }
+				id={ id }
 				label={ field.label }
 				help={ field.description }
 				value={ media }

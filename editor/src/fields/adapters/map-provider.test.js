@@ -21,6 +21,21 @@ jest.mock("@corsivo-suite/wp-admin-maps/mapbox", () => ({
 import { createFieldGeocoder, createFieldRenderer } from "./map-provider";
 
 describe("map provider adapter", () => {
+  it("forwards dedicated OSM endpoints from the field schema", async () => {
+    const originalFetch = window.fetch;
+    window.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => [] });
+    try {
+      const geocoder = createFieldGeocoder("osm", {
+        searchEndpoint: "https://geo.example.test/search",
+        reverseEndpoint: "https://geo.example.test/reverse",
+      }, {});
+      expect(geocoder.requiresSubmit).toBe(false);
+      await geocoder.search("Roma");
+      expect(window.fetch.mock.calls[0][0].origin).toBe("https://geo.example.test");
+    } finally {
+      window.fetch = originalFetch;
+    }
+  });
   it("forces permanent Mapbox geocoding when results are persisted", () => {
     createFieldGeocoder(
       "mapbox",

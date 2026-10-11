@@ -52,13 +52,27 @@ add_action( 'rest_api_init', static function (): void {
 			}
 
 			$meta_fields = defb_meta_field_map( $post_id );
+			$accepted = [];
 
 			foreach ( $metas as $meta_key => $meta_value ) {
 				if ( ! is_string( $meta_key ) || ! isset( $meta_fields[ $meta_key ] ) ) {
 					continue;
 				}
-				$safe_val = defb_sanitize_value( $meta_value, $meta_fields[ $meta_key ] );
-				update_post_meta( $post_id, $meta_key, wp_slash( $safe_val ) );
+				if ( ! defb_user_can_save_meta( $post_id, $meta_key ) ) {
+					return new WP_Error( 'rest_forbidden_meta', __( 'You do not have permission to edit this meta field.', 'define-blocks' ), [ 'status' => 403 ] );
+				}
+				$accepted[ $meta_key ] = $meta_value;
+			}
+
+			$entries = defb_meta_save_entries( $post_id, $accepted );
+			foreach ( $entries as $meta_key => $entry ) {
+				if ( ! $entry['can_save'] ) {
+					$message = is_string( $entry['validation'] ) ? $entry['validation'] : __( 'The field value is invalid.', 'define-blocks' );
+					return new WP_Error( 'defb_invalid_meta_value', $message, [ 'status' => 400, 'field' => $meta_key ] );
+				}
+			}
+			foreach ( $entries as $meta_key => $entry ) {
+				update_post_meta( $post_id, $meta_key, wp_slash( $entry['value'] ) );
 			}
 
 			return rest_ensure_response( [ 'ok' => true ] );
@@ -134,7 +148,7 @@ add_action( 'rest_api_init', static function (): void {
 		'permission_callback' => $check,
 		'args'                => [
 			'post_id' => [ 'required' => true, 'sanitize_callback' => 'absint' ],
-			'meta'    => [ 'required' => true, 'sanitize_callback' => 'sanitize_key' ],
+			'meta'    => [ 'required' => true, 'sanitize_callback' => 'defb_sanitize_meta_key' ],
 		],
 		'callback' => static function ( WP_REST_Request $req ): WP_REST_Response|WP_Error {
 			$post_id    = (int) $req->get_param( 'post_id' );
@@ -149,13 +163,33 @@ add_action( 'rest_api_init', static function (): void {
 		},
 	] );
 
+	// ── Taxonomy search ─────────────────────────────────────────
+	register_rest_route( $ns, '/taxonomy/terms', [
+		'methods'             => WP_REST_Server::READABLE,
+		'permission_callback' => $check,
+		'args'                => [
+			'taxonomy' => [ 'required' => true, 'sanitize_callback' => 'sanitize_key' ],
+			'search'   => [ 'default' => '', 'sanitize_callback' => 'sanitize_text_field' ],
+			'include'  => [ 'default' => [], 'sanitize_callback' => 'defb_sanitize_term_ids' ],
+			'page'     => [ 'default' => 1, 'sanitize_callback' => static fn( $value ): int => max( 1, absint( $value ) ) ],
+			'per_page' => [ 'default' => 20, 'sanitize_callback' => static fn( $value ): int => min( 100, max( 1, absint( $value ) ) ) ],
+		],
+		'callback' => 'defb_rest_search_terms',
+	] );
+
 	// ── Post preview data ───────────────────────────────────────
 
 	register_rest_route( $ns, '/posts/preview/(?P<id>\d+)', [
 		'methods'             => WP_REST_Server::READABLE,
 		'permission_callback' => static function ( WP_REST_Request $req ): bool|WP_Error {
 			$post_id = (int) $req->get_param( 'id' );
-			if ( ! $post_id || ! current_user_can( 'read_post', $post_id ) ) {
+			$post = $post_id ? get_post( $post_id ) : null;
+			if (
+				! $post ||
+				! defb_current_user_can_edit_content() ||
+				! in_array( $post->post_type, defb_searchable_post_types(), true ) ||
+				! current_user_can( 'read_post', $post_id )
+			) {
 				return new WP_Error( 'rest_forbidden', __( 'You do not have permission to read this post.', 'define-blocks' ), [ 'status' => 403 ] );
 			}
 
@@ -189,6 +223,7 @@ add_action( 'rest_api_init', static function (): void {
 			'blockName'  => [ 'required' => true, 'sanitize_callback' => 'sanitize_text_field' ],
 			'post_id'    => [ 'required' => true, 'sanitize_callback' => 'absint' ],
 			'attributes' => [ 'default' => [], 'sanitize_callback' => static fn( $v ) => is_array( $v ) ? $v : [] ],
+			'context'    => [ 'default' => [], 'sanitize_callback' => static fn( $value ) => is_array( $value ) ? $value : [] ],
 			'content'    => [
 				'default'           => '',
 				'sanitize_callback' => static function ( $value ): string {
@@ -216,9 +251,13 @@ add_action( 'rest_api_init', static function (): void {
 			$requested_attributes = is_array( $requested_attributes ) ? $requested_attributes : [];
 			$is_full_attributes   = array_key_exists( 'values', $requested_attributes );
 			$raw_values           = $is_full_attributes ? $requested_attributes['values'] : $requested_attributes;
-			$raw_values           = is_array( $raw_values ) ? $raw_values : [];
-			$values               = defb_sanitize_attributes( $raw_values, $block_def );
-			$values               = array_replace( defb_collect_defaults( defb_resolve_schema( $block_def ) ), $values );
+			if ( ! is_array( $raw_values ) ) {
+				return defb_invalid_field_value();
+			}
+			$values               = defb_sanitize_attributes( $raw_values, $block_def, false );
+			if ( is_wp_error( $values ) ) {
+				return $values;
+			}
 			$attributes           = $is_full_attributes ? defb_sanitize_deep( $requested_attributes ) : [];
 			$attributes           = is_array( $attributes ) ? $attributes : [];
 			$attributes['values'] = $values;
@@ -235,23 +274,21 @@ add_action( 'rest_api_init', static function (): void {
 			setup_postdata( $post );
 
 			try {
+				foreach ( $blocks as $definition ) {
+					defb_register_server_block( $definition );
+				}
 				$serialized_attributes = serialize_block_attributes( $attributes );
 				$serialized_block      = '<!-- wp:' . $block_name . ' ' . $serialized_attributes . ' -->'
 					. $content
 					. '<!-- /wp:' . $block_name . ' -->';
 				$parsed_block          = parse_blocks( $serialized_block )[0];
-				$wp_block              = new WP_Block( $parsed_block, [
+				$context               = defb_sanitize_preview_context( $req->get_param( 'context' ) ?? [] );
+				$context               = array_replace( $context, [
 					'postId'   => $post_id,
 					'postType' => $post->post_type,
 				] );
-				WP_Block_Supports::$block_to_render = $wp_block->parsed_block;
-				$rendered_content = do_blocks( $content );
-				$html             = defb_render_output( $block_def, $attributes, $rendered_content, $wp_block );
-				if ( $html === null ) {
-					$html = $rendered_content;
-				} else {
-					$html = defb_wrap_render_output( $block_def, $html );
-				}
+				$wp_block              = new WP_Block( $parsed_block, $context );
+				$html                  = $wp_block->render();
 			} catch ( \Throwable ) {
 				return new WP_Error( 'render_fail', __( 'Render failed.', 'define-blocks' ), [ 'status' => 500 ] );
 			} finally {
@@ -311,8 +348,87 @@ add_action( 'rest_api_init', static function (): void {
 
 // ── Shared helpers ──────────────────────────────────────────────────
 
+function defb_sanitize_meta_key( mixed $value ): string {
+	return is_scalar( $value ) ? sanitize_text_field( (string) $value ) : '';
+}
+
+function defb_sanitize_term_ids( mixed $value ): array {
+	$values = is_array( $value ) ? $value : explode( ',', (string) $value );
+	return array_values( array_unique( array_filter( array_map( 'absint', $values ) ) ) );
+}
+
+function defb_rest_search_terms( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	$taxonomy_name = sanitize_key( (string) $request->get_param( 'taxonomy' ) );
+	$taxonomy      = get_taxonomy( $taxonomy_name );
+
+	if ( ! $taxonomy ) {
+		return new WP_Error( 'bad_taxonomy', __( 'Invalid taxonomy.', 'define-blocks' ), [ 'status' => 400 ] );
+	}
+
+	if ( empty( $taxonomy->cap->assign_terms ) || ! current_user_can( $taxonomy->cap->assign_terms ) ) {
+		return new WP_Error( 'rest_forbidden', __( 'You do not have permission to assign terms.', 'define-blocks' ), [ 'status' => 403 ] );
+	}
+
+	$page     = max( 1, (int) $request->get_param( 'page' ) );
+	$per_page = min( 100, max( 1, (int) $request->get_param( 'per_page' ) ) );
+	$include  = defb_sanitize_term_ids( $request->get_param( 'include' ) );
+	$args     = [
+		'taxonomy'   => $taxonomy_name,
+		'hide_empty' => false,
+		'orderby'    => 'name',
+		'order'      => 'ASC',
+		'number'     => $per_page,
+		'offset'     => ( $page - 1 ) * $per_page,
+	];
+
+	if ( $include ) {
+		$args['include'] = $include;
+		$args['orderby'] = 'include';
+	} else {
+		$args['search'] = sanitize_text_field( (string) $request->get_param( 'search' ) );
+	}
+
+	$terms = get_terms( $args );
+	if ( is_wp_error( $terms ) ) {
+		return $terms;
+	}
+
+	$count_args           = $args;
+	$count_args['fields'] = 'count';
+	unset( $count_args['number'], $count_args['offset'] );
+	$total = get_terms( $count_args );
+	if ( is_wp_error( $total ) ) {
+		return $total;
+	}
+
+	$response = rest_ensure_response( array_map( 'defb_prepare_term_option', $terms ) );
+	$response->header( 'X-WP-Total', (int) $total );
+	$response->header( 'X-WP-TotalPages', (int) ceil( (int) $total / $per_page ) );
+
+	return $response;
+}
+
+function defb_prepare_term_option( WP_Term $term ): array {
+	$names = [];
+	foreach ( array_reverse( get_ancestors( $term->term_id, $term->taxonomy, 'taxonomy' ) ) as $ancestor_id ) {
+		$ancestor = get_term( $ancestor_id, $term->taxonomy );
+		if ( $ancestor instanceof WP_Term ) {
+			$names[] = $ancestor->name;
+		}
+	}
+	$names[] = $term->name;
+
+	return [
+		'id'     => $term->term_id,
+		'name'   => $term->name,
+		'parent' => $term->parent,
+		'path'   => implode( ' › ', $names ),
+	];
+}
+
 function defb_sanitize_deep( mixed $data ): mixed {
 	return match ( true ) {
+		$data === null                       => null,
 		is_array( $data )                     => array_map( __FUNCTION__, $data ),
 		is_string( $data )                    => sanitize_textarea_field( $data ),
 		is_numeric( $data ) || is_bool( $data ) => $data,
@@ -484,17 +600,47 @@ function defb_sanitize_repeater( mixed $value, array $field ): array {
 	}, $value ) );
 }
 
-function defb_sanitize_attributes( array $attrs, array $block ): array {
+function defb_sanitize_attributes( array $attrs, array $block, bool $hydrate = true ): array|WP_Error {
 	$schema    = defb_resolve_schema( $block );
 	$field_map = defb_schema_field_map( $schema );
+	return defb_normalize_field_values( $hydrate ? defb_hydrate_values( $attrs, $schema ) : $attrs, $field_map, $hydrate );
+}
 
-	$out = [];
-	foreach ( $attrs as $key => $value ) {
-		$field      = $field_map[ $key ] ?? null;
-		$out[ $key ] = $field ? defb_sanitize_value( $value, $field ) : defb_sanitize_deep( $value );
+function defb_sanitize_preview_context( mixed $value ): mixed {
+	return match ( true ) {
+		$value === null                       => null,
+		is_array( $value )                     => array_map( __FUNCTION__, $value ),
+		is_string( $value )                    => current_user_can( 'unfiltered_html' ) ? $value : wp_kses_post( $value ),
+		is_numeric( $value ) || is_bool( $value ) => $value,
+		default                                => '',
+	};
+}
+
+function defb_meta_save_entries( int $post_id, array $metas ): array {
+	$entries = [];
+	foreach ( defb_registered( $post_id ) as $name => $block ) {
+		$schema = defb_resolve_schema( $block );
+		$fields = defb_schema_field_map( $schema );
+		$relevant = array_filter( $fields, static fn( array $field ): bool => is_string( $field['saveInMeta'] ?? null ) && array_key_exists( $field['saveInMeta'], $metas ) );
+		if ( ! $relevant ) {
+			continue;
+		}
+		$instances = defb_get_blocks( $post_id, $name );
+		$values = $instances ? end( $instances ) : [];
+		foreach ( $relevant as $key => $field ) {
+			$values[ $key ] = $metas[ $field['saveInMeta'] ];
+		}
+		$values = defb_hydrate_values( $values, $schema );
+		foreach ( defb_schema_field_sets( $schema ) as $field_set ) {
+			foreach ( defb_field_save_entries( $field_set, $values, $post_id, $values ) as $entry ) {
+				$meta_key = $entry['field']['saveInMeta'] ?? null;
+				if ( is_string( $meta_key ) && array_key_exists( $meta_key, $metas ) ) {
+					$entries[ $meta_key ] = $entry;
+				}
+			}
+		}
 	}
-
-	return $out;
+	return $entries;
 }
 
 function defb_flatten_fields( array $fields ): array {

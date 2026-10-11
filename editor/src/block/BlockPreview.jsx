@@ -1,14 +1,20 @@
-import { useState, useEffect, useRef } from '@wordpress/element';
+import { useState, useEffect } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import { serialize } from '@wordpress/blocks';
 import { Spinner, Button, Notice } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { useBlockContext } from '../store/hooks';
+import { cachePreview, getCachedPreview, getPreviewKey } from './preview-cache';
 
-export default function BlockPreview( { blockName, attributes, onRestore } ) {
+export default function BlockPreview( {
+	blockName,
+	attributes,
+	context = {},
+	onRestore,
+} ) {
 	const { clientId } = useBlockContext();
-	const postId = useSelect(
+	const currentPostId = useSelect(
 		( select ) => select( 'core/editor' ).getCurrentPostId(),
 		[]
 	);
@@ -20,53 +26,73 @@ export default function BlockPreview( { blockName, attributes, onRestore } ) {
 	const [ html, setHtml ] = useState( '' );
 	const [ error, setError ] = useState( '' );
 	const [ loading, setLoading ] = useState( true );
-	const abortRef = useRef( null );
-	const attributesKey = JSON.stringify( attributes || {} );
+	const previewAttributes = Object.fromEntries(
+		Object.entries( attributes || {} ).filter(
+			( [ key ] ) => key !== 'isPreview' && key !== 'collapsed'
+		)
+	);
+	const requestKey = getPreviewKey( {
+		blockName,
+		post_id: context.postId ?? currentPostId,
+		attributes: previewAttributes,
+		content,
+		context,
+	} );
 
 	useEffect( () => {
-		abortRef.current?.abort();
 		const controller = new AbortController();
-		abortRef.current = controller;
-		setLoading( true );
 		setError( '' );
+		const cached = getCachedPreview( requestKey );
+		if ( cached !== undefined ) {
+			setHtml( cached );
+			setLoading( false );
+			return () => controller.abort();
+		}
+		setLoading( true );
 
-		apiFetch( {
-			path: '/defb/v1/render',
-			method: 'POST',
-			data: {
-				blockName,
-				post_id: postId,
-				attributes: JSON.parse( attributesKey ),
-				content,
-			},
-			signal: controller.signal,
-		} )
-			.then( ( res ) => {
-				if ( ! controller.signal.aborted ) {
-					setHtml( typeof res === 'string' ? res : '' );
-					setLoading( false );
-				}
-			} )
-			.catch( ( err ) => {
-				if ( controller.signal.aborted ) {
-					return;
-				}
-				setHtml( '' );
-				setError(
-					err?.message ||
-						__( 'The preview request failed.', 'define-blocks' )
-				);
-				setLoading( false );
-			} );
+		const timeout = setTimeout(
+			() =>
+				apiFetch( {
+					path: '/defb/v1/render',
+					method: 'POST',
+					data: JSON.parse( requestKey ),
+					signal: controller.signal,
+				} )
+					.then( ( res ) => {
+						if ( ! controller.signal.aborted ) {
+							const nextHtml = typeof res === 'string' ? res : '';
+							cachePreview( requestKey, nextHtml );
+							setHtml( nextHtml );
+							setLoading( false );
+						}
+					} )
+					.catch( ( err ) => {
+						if ( controller.signal.aborted ) {
+							return;
+						}
+						setError(
+							err?.message ||
+								__(
+									'The preview request failed.',
+									'define-blocks'
+								)
+						);
+						setLoading( false );
+					} ),
+			250
+		);
 
-		return () => controller.abort();
-	}, [ blockName, postId, attributesKey, content ] );
+		return () => {
+			clearTimeout( timeout );
+			controller.abort();
+		};
+	}, [ requestKey ] );
 
 	const isEmpty =
 		! loading &&
 		( ! html.trim() || /^<(p|div)>\s*<\/\1>$/.test( html.trim() ) );
 
-	if ( loading ) {
+	if ( loading && ! html ) {
 		return (
 			<div className="defb-preview__loading">
 				<Spinner />
@@ -74,7 +100,7 @@ export default function BlockPreview( { blockName, attributes, onRestore } ) {
 		);
 	}
 
-	if ( error ) {
+	if ( error && ! html ) {
 		return (
 			<div className="defb-preview__empty">
 				<Notice status="error" isDismissible={ false }>
@@ -104,9 +130,16 @@ export default function BlockPreview( { blockName, attributes, onRestore } ) {
 	}
 
 	return (
-		<div
-			className="defb-preview defb-preview__html"
-			dangerouslySetInnerHTML={ { __html: html } }
-		/>
+		<div className="defb-preview" aria-busy={ loading }>
+			{ error && (
+				<Notice status="error" isDismissible={ false }>
+					{ error }
+				</Notice>
+			) }
+			<div
+				className="defb-preview__html"
+				dangerouslySetInnerHTML={ { __html: html } }
+			/>
+		</div>
 	);
 }

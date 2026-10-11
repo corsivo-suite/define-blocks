@@ -6,7 +6,7 @@ import { getSelectionI18n } from "./control-i18n";
 import { normalizeFieldOptions } from "./value-contracts";
 
 export default function AutocompleteField({
-  name,
+  id,
   field,
   value,
   onChange,
@@ -52,7 +52,7 @@ export default function AutocompleteField({
 
   return (
     <AsyncCombobox
-      id={name}
+      id={id}
       label={field.label}
       help={field.description}
       error={error}

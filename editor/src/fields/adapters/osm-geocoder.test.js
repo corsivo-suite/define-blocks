@@ -45,4 +45,41 @@ describe( 'createOsmGeocoder', () => {
 			meta: { osmType: null },
 		} );
 	} );
+
+	it( 'shares the public request interval and cache between field instances', async () => {
+		jest.useFakeTimers( { now: Date.now() + 100000 } );
+		try {
+			const starts = [];
+			const fetch = jest.fn( async () => {
+				starts.push( Date.now() );
+				return { ok: true, json: async () => [] };
+			} );
+			const first = createOsmGeocoder( { fetch } );
+			const second = createOsmGeocoder( { fetch } );
+			const search = first.search( 'Interval test' );
+			const reverse = second.reverse( { latitude: 12.34, longitude: 56.78 } );
+			await jest.advanceTimersByTimeAsync( 2200 );
+			await Promise.all( [ search, reverse ] );
+			expect( starts ).toHaveLength( 2 );
+			expect( starts[ 1 ] - starts[ 0 ] ).toBeGreaterThanOrEqual( 1100 );
+			await second.search( 'Interval test' );
+			expect( fetch ).toHaveBeenCalledTimes( 2 );
+			expect( first.requiresSubmit ).toBe( true );
+		} finally {
+			jest.useRealTimers();
+		}
+	} );
+
+	it( 'routes dedicated endpoints without enabling public search restrictions', async () => {
+		const fetch = jest.fn().mockResolvedValue( { ok: true, json: async () => [] } );
+		const geocoder = createOsmGeocoder( {
+			fetch,
+			searchEndpoint: 'https://geo.example.test/search',
+			reverseEndpoint: 'https://geo.example.test/reverse',
+		} );
+		expect( geocoder.requiresSubmit ).toBe( false );
+		await geocoder.search( 'Test' );
+		await geocoder.reverse( { latitude: 1, longitude: 2 } );
+		expect( fetch.mock.calls.map( ( [ url ] ) => url.origin + url.pathname ) ).toEqual( [ 'https://geo.example.test/search', 'https://geo.example.test/reverse' ] );
+	} );
 } );

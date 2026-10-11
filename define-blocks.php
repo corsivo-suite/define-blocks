@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name:       Define Blocks
- * Plugin URI:        https://github.com/salvatorecorsi/define-blocks
+ * Plugin URI:        https://github.com/corsivo-suite/define-blocks
  * Description:       Define native blocks with pure PHP.
  * Version:           1.1.0
  * Update URI:        https://www.corsivo.dev/plugins/define-blocks
@@ -68,11 +68,11 @@ function defb_process_save( array $blocks, array $registered, int $post_id ): vo
 
 		if ( isset( $registered[ $name ] ) ) {
 			$schema      = defb_resolve_schema( $registered[ $name ] );
-			$raw_values  = $block['attrs']['values'] ?? [];
-			$values      = is_array( $raw_values ) ? $raw_values : [];
-			$values      = array_replace( defb_collect_defaults( $schema ), $values );
-
-			defb_run_field_saves( $schema, $values, $post_id );
+			$attributes  = is_array( $block['attrs'] ?? null ) ? $block['attrs'] : [];
+			$raw_values  = array_key_exists( 'values', $attributes ) ? $attributes['values'] : [];
+			if ( is_array( $raw_values ) ) {
+				defb_run_field_saves( $schema, $raw_values, $post_id );
+			}
 		}
 
 		if ( ! empty( $block['innerBlocks'] ) && is_array( $block['innerBlocks'] ) ) {
@@ -82,6 +82,7 @@ function defb_process_save( array $blocks, array $registered, int $post_id ): vo
 }
 
 function defb_run_field_saves( array $schema, array $values, int $post_id ): void {
+	$values = defb_hydrate_values( $values, $schema );
 	foreach ( defb_schema_field_sets( $schema ) as $fields ) {
 		defb_run_field_map_saves( $fields, $values, $post_id, $values );
 	}
@@ -95,35 +96,54 @@ function defb_run_field_map_saves(
 	bool $validation_enabled = true,
 	bool $save_enabled = true,
 ): void {
+	foreach ( defb_field_save_entries( $fields, $values, $post_id, $root_values, $validation_enabled, $save_enabled ) as $entry ) {
+		if ( ! $entry['can_save'] ) {
+			continue;
+		}
+		$field = $entry['field'];
+		if ( ! empty( $field['saveInMeta'] ) && is_string( $field['saveInMeta'] ) ) {
+			if ( ! defb_user_can_save_meta( $post_id, $field['saveInMeta'], true ) ) {
+				continue;
+			}
+			update_post_meta( $post_id, $field['saveInMeta'], wp_slash( $entry['value'] ) );
+		}
+		if ( ! empty( $field['saveCallback'] ) && is_callable( $field['saveCallback'] ) ) {
+			call_user_func( $field['saveCallback'], $entry['value'], $post_id, $entry['key'] );
+		}
+	}
+}
+
+function defb_field_save_entries(
+	array $fields,
+	array $values,
+	int $post_id,
+	array $root_values,
+	bool $validation_enabled = true,
+	bool $save_enabled = true,
+): iterable {
 	foreach ( $fields as $key => $field ) {
 		if ( ! is_array( $field ) ) {
 			continue;
 		}
 
-		$value      = array_key_exists( $key, $values ) ? $values[ $key ] : ( $field['default'] ?? null );
+		$value      = defb_normalize_field_value( array_key_exists( $key, $values ) ? $values[ $key ] : ( $field['default'] ?? null ), $field );
 		$is_visible = $validation_enabled && defb_field_is_visible_for_save( $field, $values );
-		$valid      = $is_visible
+		$valid      = is_wp_error( $value ) ? false : ( $is_visible
 			? defb_validate_field_for_save( $value, $field, $key, $post_id, $root_values )
-			: true;
+			: true );
 		$can_save   = $save_enabled && $valid !== false && ! is_string( $valid );
 
-		if ( $can_save && ! empty( $field['saveInMeta'] ) && is_string( $field['saveInMeta'] ) ) {
-			update_post_meta( $post_id, $field['saveInMeta'], wp_slash( defb_sanitize_value( $value, $field ) ) );
-		}
-
-		if ( $can_save && ! empty( $field['saveCallback'] ) && is_callable( $field['saveCallback'] ) ) {
-			call_user_func( $field['saveCallback'], $value, $post_id, $key );
-		}
+		yield [ 'key' => $key, 'field' => $field, 'value' => $value, 'can_save' => $can_save, 'validation' => $valid ];
 
 		$type = $field['type'] ?? '';
 		if ( $type === 'group' ) {
 			$nested_fields = isset( $field['fields'] ) && is_array( $field['fields'] ) ? $field['fields'] : [];
-			defb_run_field_map_saves( $nested_fields, $values, $post_id, $root_values, $is_visible && $can_save, $can_save );
+			yield from defb_field_save_entries( $nested_fields, $values, $post_id, $root_values, $is_visible && $can_save, $can_save );
 		} elseif ( $type === 'tabpanels' ) {
 			$tabs = isset( $field['tabs'] ) && is_array( $field['tabs'] ) ? $field['tabs'] : [];
 			foreach ( $tabs as $tab ) {
 				$nested_fields = isset( $tab['fields'] ) && is_array( $tab['fields'] ) ? $tab['fields'] : [];
-				defb_run_field_map_saves( $nested_fields, $values, $post_id, $root_values, $is_visible && $can_save, $can_save );
+				yield from defb_field_save_entries( $nested_fields, $values, $post_id, $root_values, $is_visible && $can_save, $can_save );
 			}
 		}
 	}
@@ -330,6 +350,8 @@ function defb_value_matches_pattern( string $value, string $pattern ): bool {
 require_once plugin_dir_path( __FILE__ ) . 'includes/constants.php';
 require_once plugin_dir_path( __FILE__ ) . 'includes/conditions.php';
 require_once plugin_dir_path( __FILE__ ) . 'includes/register.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/diagnostics.php';
+require_once plugin_dir_path( __FILE__ ) . 'includes/values.php';
 require_once plugin_dir_path( __FILE__ ) . 'includes/render.php';
 require_once plugin_dir_path( __FILE__ ) . 'includes/enqueue.php';
 require_once plugin_dir_path( __FILE__ ) . 'includes/api.php';

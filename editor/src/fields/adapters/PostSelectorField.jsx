@@ -9,7 +9,7 @@ import {
 } from "./post-options";
 
 export default function PostSelectorField({
-  name,
+  id,
   field,
   value,
   onChange,
@@ -37,7 +37,7 @@ export default function PostSelectorField({
 
   return (
     <EntitySelector
-      id={name}
+      id={id}
       label={field.label}
       help={field.description}
       error={error}

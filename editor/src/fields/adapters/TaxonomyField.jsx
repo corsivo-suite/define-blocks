@@ -1,231 +1,204 @@
-import { useCallback, useEffect, useMemo, useState } from "@wordpress/element";
-import { useDispatch, useSelect } from "@wordpress/data";
-import { __ } from "@wordpress/i18n";
-import apiFetch from "@wordpress/api-fetch";
-import { addQueryArgs } from "@wordpress/url";
-import { CreatableSortableMultiSelect } from "@corsivo-suite/wp-admin-ui/creatable-sortable-multi-select";
-import { getSelectionI18n, getSortableI18n } from "./control-i18n";
+import { useCallback, useEffect, useMemo, useRef, useState } from '@wordpress/element';
+import { useDispatch, useSelect } from '@wordpress/data';
+import { __ } from '@wordpress/i18n';
+import apiFetch from '@wordpress/api-fetch';
+import { CreatableSortableMultiSelect } from '@corsivo-suite/wp-admin-ui/creatable-sortable-multi-select';
+import { getSelectionI18n, getSortableI18n } from './control-i18n';
 import {
-  getLegacySelectionValues,
-  normalizeLegacySelections,
-  toLegacySelections,
-} from "./value-contracts";
+	getLegacySelectionValues,
+	normalizeLegacySelections,
+	toLegacySelections,
+} from './value-contracts';
 import {
-  buildTaxonomyRestPath,
-  normalizeTermOption,
-  replacePendingTermOption,
-} from "./taxonomy-options";
+	buildTaxonomyRestPath,
+	buildTaxonomySearchPath,
+	chunkTermValues,
+	mergeTermOptions,
+	normalizeTermOption,
+	normalizeTermOptions,
+} from './taxonomy-options';
 
-const TERMS_PER_PAGE = 100;
+const SEARCH_RESULTS_PER_PAGE = 50;
 
-export default function TaxonomyField({
-  name,
-  field,
-  value,
-  onChange,
-  onBlur,
-  error,
-}) {
-  const taxonomySlug = field.taxonomy || "category";
-  const { createErrorNotice } = useDispatch("core/notices");
-  const [terms, setTerms] = useState(null);
-  const selectedOptions = useMemo(
-    () => normalizeLegacySelections(value),
-    [value],
-  );
-  const selectedValues = useMemo(
-    () => getLegacySelectionValues(value),
-    [value],
-  );
-  const taxonomy = useSelect(
-    (select) => select("core").getTaxonomy(taxonomySlug),
-    [taxonomySlug],
-  );
-  const resolvedRestBase = field.restBase || taxonomy?.rest_base;
-  const resolvedRestNamespace =
-    field.restNamespace || taxonomy?.rest_namespace || "wp/v2";
-  const restPath = resolvedRestBase
-    ? buildTaxonomyRestPath(resolvedRestNamespace, resolvedRestBase)
-    : "";
+export default function TaxonomyField( {
+	id,
+	field,
+	value,
+	onChange,
+	onBlur,
+	error,
+} ) {
+	const taxonomySlug = field.taxonomy || 'category';
+	const { createErrorNotice } = useDispatch( 'core/notices' );
+	const [ createdOptions, setCreatedOptions ] = useState( [] );
+	const selectedOptions = useMemo(
+		() => normalizeLegacySelections( value ),
+		[ value ]
+	);
+	const selectedValues = useMemo(
+		() => getLegacySelectionValues( value ),
+		[ value ]
+	);
+	const taxonomy = useSelect(
+		( select ) => select( 'core' ).getTaxonomy( taxonomySlug ),
+		[ taxonomySlug ]
+	);
+	const resolvedRestBase = field.restBase || taxonomy?.rest_base;
+	const resolvedRestNamespace = field.restNamespace || taxonomy?.rest_namespace || 'wp/v2';
+	const restPath = resolvedRestBase
+		? buildTaxonomyRestPath( resolvedRestNamespace, resolvedRestBase )
+		: '';
+	const requestContext = useMemo( () => ( { taxonomySlug, restPath } ), [ taxonomySlug, restPath ] );
+	const contextRef = useRef( requestContext );
+	const pendingRequests = useRef( new Set() );
+	const selectionRef = useRef( selectedOptions );
+	const savedValueRef = useRef( value );
+	const onChangeRef = useRef( onChange );
+	contextRef.current = requestContext;
+	onChangeRef.current = onChange;
+	if ( savedValueRef.current !== value ) {
+		savedValueRef.current = value;
+		selectionRef.current = selectedOptions;
+	}
+	useEffect( () => {
+		setCreatedOptions( [] );
+		const requests = pendingRequests.current;
+		return () => {
+			requests.forEach( ( controller ) => controller.abort() );
+			requests.clear();
+		};
+	}, [ requestContext ] );
+	const createFallbackOption = useCallback( ( selectedValue ) => {
+		const normalizedValue = String( selectedValue );
+		return selectedOptions.find( ( option ) => option.value === normalizedValue ) || {
+			value: normalizedValue,
+			label: normalizedValue,
+		};
+	}, [ selectedOptions ] );
+	const canCreate = Boolean( field.allowCreate && restPath );
+	const createLabel = field.createLabel || __( 'Create', 'define-blocks' );
+	const controlI18n = getSelectionI18n(
+		field.placeholder || __( 'Search terms…', 'define-blocks' ),
+		1
+	);
+	const sortableI18n = getSortableI18n();
+	const reportLoadError = useCallback( ( requestError ) => {
+		createErrorNotice(
+			requestError?.message || __( 'Could not load the terms.', 'define-blocks' ),
+			{ type: 'snackbar' }
+		);
+	}, [ createErrorNotice ] );
+	const loadOptions = useCallback( async ( query, { signal } ) => {
+		const terms = await apiFetch( {
+			path: buildTaxonomySearchPath( taxonomySlug, {
+				search: query,
+				perPage: SEARCH_RESULTS_PER_PAGE,
+			} ),
+			signal,
+		} );
 
-  useEffect(() => {
-    setTerms(null);
-    if (!restPath) {
-      return undefined;
-    }
+		return normalizeTermOptions( terms );
+	}, [ taxonomySlug ] );
+	const resolveValues = useCallback( async ( values, { signal } ) => {
+		const batches = await Promise.all(
+			chunkTermValues( values ).map( async ( include ) => apiFetch( {
+				path: buildTaxonomySearchPath( taxonomySlug, {
+					include,
+					perPage: include.length,
+				} ),
+				signal,
+			} ) )
+		);
 
-    const controller = new AbortController();
-    const loadTerms = async () => {
-      const loadedTerms = [];
-      let page = 1;
+		return normalizeTermOptions( batches.flat() );
+	}, [ taxonomySlug ] );
 
-      while (true) {
-        let response;
-        try {
-          response = await apiFetch({
-            path: addQueryArgs(restPath, {
-              per_page: TERMS_PER_PAGE,
-              page,
-              _fields: "id,name",
-            }),
-            parse: false,
-            signal: controller.signal,
-          });
-        } catch (requestError) {
-          if (
-            page > 1 &&
-            /invalid_page_number$/.test(requestError?.code || "")
-          ) {
-            break;
-          }
-          throw requestError;
-        }
+	const handleChange = useCallback( async ( nextValues, nextOptions, change ) => {
+		if ( change?.type !== 'create' || ! canCreate ) {
+			const nextSelection = toLegacySelections( nextValues, nextOptions, selectionRef.current );
+			selectionRef.current = normalizeLegacySelections( nextSelection );
+			onChangeRef.current( nextSelection );
+			return;
+		}
 
-        const pageTerms = await response.json();
-        if (!Array.isArray(pageTerms)) {
-          throw new Error(__("Could not load the terms.", "define-blocks"));
-        }
+		const pendingOption = change.option;
+		const controller = new AbortController();
+		pendingRequests.current.add( controller );
+		const isCurrent = () => ! controller.signal.aborted && contextRef.current === requestContext;
+		const commitTerm = ( term ) => {
+			const option = normalizeTermOption( term );
+			if ( ! isCurrent() || ! option ) {
+				return;
+			}
+			const resolvedOptions = mergeTermOptions( selectionRef.current, [ option ] );
+			selectionRef.current = resolvedOptions;
+			setCreatedOptions( ( currentOptions ) => mergeTermOptions( currentOptions, [ option ] ) );
+			onChangeRef.current( toLegacySelections(
+				resolvedOptions.map( ( selected ) => selected.value ),
+				resolvedOptions
+			) );
+		};
+		try {
+			const createdTerm = await apiFetch( {
+				path: restPath,
+				method: 'POST',
+				data: { name: pendingOption.label },
+				signal: controller.signal,
+			} );
+			commitTerm( createdTerm );
+		} catch ( requestError ) {
+			if ( ! isCurrent() ) {
+				return;
+			}
+			if ( requestError?.code === 'term_exists' && requestError?.data?.term_id ) {
+				const existingTerm = {
+					id: requestError.data.term_id,
+					name: pendingOption.label,
+				};
+				commitTerm( existingTerm );
+				return;
+			}
 
-        loadedTerms.push(...pageTerms);
-        const totalPages = Number.parseInt(
-          response.headers.get("X-WP-TotalPages"),
-          10,
-        );
-        if (
-          (Number.isFinite(totalPages) && page >= totalPages) ||
-          (!Number.isFinite(totalPages) && pageTerms.length < TERMS_PER_PAGE)
-        ) {
-          break;
-        }
-        page++;
-      }
+			createErrorNotice(
+				requestError?.message || __( 'Could not create the term.', 'define-blocks' ),
+				{ type: 'snackbar' }
+			);
+		} finally {
+			pendingRequests.current.delete( controller );
+		}
+	}, [ canCreate, createErrorNotice, restPath, requestContext ] );
 
-      if (!controller.signal.aborted) {
-        setTerms(loadedTerms);
-      }
-    };
-
-    loadTerms().catch((requestError) => {
-      if (controller.signal.aborted) {
-        return;
-      }
-      setTerms(null);
-      createErrorNotice(
-        requestError?.message ||
-          __("Could not load the terms.", "define-blocks"),
-        { type: "snackbar" },
-      );
-    });
-
-    return () => controller.abort();
-  }, [createErrorNotice, restPath]);
-
-  const termOptions = useMemo(
-    () => (terms || []).map(normalizeTermOption).filter(Boolean),
-    [terms],
-  );
-  const options = useMemo(() => {
-    const optionValues = new Set(termOptions.map((option) => option.value));
-    return [
-      ...termOptions,
-      ...selectedOptions.filter((option) => !optionValues.has(option.value)),
-    ];
-  }, [selectedOptions, termOptions]);
-  const canCreate = Boolean(
-    field.allowCreate && restPath && Array.isArray(terms),
-  );
-  const createLabel = field.createLabel || __("Create", "define-blocks");
-  const controlI18n = getSelectionI18n(field.placeholder);
-  const sortableI18n = getSortableI18n();
-
-  const handleChange = useCallback(
-    async (nextValues, nextOptions, change) => {
-      if (change?.type !== "create" || !canCreate) {
-        onChange(toLegacySelections(nextValues, nextOptions, selectedOptions));
-        return;
-      }
-
-      const pendingOption = change.option;
-      try {
-        const createdTerm = await apiFetch({
-          path: restPath,
-          method: "POST",
-          data: { name: pendingOption.label },
-        });
-        setTerms((currentTerms) => [
-          ...(Array.isArray(currentTerms) ? currentTerms : []),
-          createdTerm,
-        ]);
-        const resolvedOptions = replacePendingTermOption(
-          nextOptions,
-          pendingOption.value,
-          createdTerm,
-        );
-        onChange(
-          toLegacySelections(
-            resolvedOptions.map((option) => option.value),
-            resolvedOptions,
-            selectedOptions,
-          ),
-        );
-      } catch (requestError) {
-        if (
-          requestError?.code === "term_exists" &&
-          requestError?.data?.term_id
-        ) {
-          const existingTerm = {
-            id: requestError.data.term_id,
-            name: pendingOption.label,
-          };
-          const resolvedOptions = replacePendingTermOption(
-            nextOptions,
-            pendingOption.value,
-            existingTerm,
-          );
-          onChange(
-            toLegacySelections(
-              resolvedOptions.map((option) => option.value),
-              resolvedOptions,
-              selectedOptions,
-            ),
-          );
-          return;
-        }
-
-        createErrorNotice(
-          requestError?.message ||
-            __("Could not create the term.", "define-blocks"),
-          { type: "snackbar" },
-        );
-      }
-    },
-    [canCreate, createErrorNotice, onChange, restPath, selectedOptions],
-  );
-
-  return (
-    <CreatableSortableMultiSelect
-      id={name}
-      label={field.label}
-      help={field.description}
-      error={error}
-      value={selectedValues}
-      onChange={handleChange}
-      onBlur={onBlur}
-      options={options}
-      allowCreate={canCreate}
-      allowReorder={Boolean(field.draggable)}
-      createOption={(inputValue) => ({
-        value: inputValue,
-        label: inputValue,
-        isCreated: true,
-      })}
-      renderOption={(option) =>
-        option.isCreated ? `${createLabel}: ${option.label}` : option.label
-      }
-      {...controlI18n}
-      {...sortableI18n}
-    />
-  );
+	return (
+		<CreatableSortableMultiSelect
+			id={ id }
+			label={ field.label }
+			help={ field.description }
+			error={ error }
+			value={ selectedValues }
+			onChange={ handleChange }
+			onBlur={ onBlur }
+			options={ createdOptions }
+			loadOptions={ loadOptions }
+			resolveValues={ resolveValues }
+			createFallbackOption={ createFallbackOption }
+			onLoadError={ reportLoadError }
+			onResolveError={ reportLoadError }
+			minQueryLength={ 1 }
+			debounceMs={ 300 }
+			allowCreate={ canCreate }
+			allowReorder={ Boolean( field.draggable ) }
+			createOption={ ( inputValue ) => ( {
+				value: inputValue,
+				label: inputValue,
+				isCreated: true,
+			} ) }
+			renderOption={ ( option ) =>
+				option.isCreated ? `${ createLabel }: ${ option.label }` : option.label
+			}
+			{ ...controlI18n }
+			{ ...sortableI18n }
+		/>
+	);
 }
 
 TaxonomyField.handlesError = true;

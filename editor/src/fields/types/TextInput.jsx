@@ -1,7 +1,16 @@
 import { TextControl } from '@wordpress/components';
 import { applyFilters } from '@wordpress/hooks';
+import { normalizeNumericValue } from '../../engine/values';
 
-export default function TextInput( { name, field, type, value, onChange, onBlur } ) {
+export default function TextInput( {
+	id,
+	name,
+	field,
+	type,
+	value,
+	onChange,
+	onBlur,
+} ) {
 	const isNumber = field.originalType === 'number' || type === 'number';
 
 	const handleChange = ( next ) => {
@@ -9,13 +18,19 @@ export default function TextInput( { name, field, type, value, onChange, onBlur 
 			next = next.replace( /<[^>]*>/g, '' );
 		}
 		if ( type === 'text-with-parser' && field.parser ) {
-			next = applyFilters( `defb.parse.${ field.parser }`, next, name, field );
+			next = applyFilters(
+				`defb.parse.${ field.parser }`,
+				next,
+				name,
+				field
+			);
 		}
-		onChange( next );
+		onChange( isNumber ? normalizeNumericValue( next ) : next );
 	};
 
 	return (
 		<TextControl
+			id={ id }
 			__next40pxDefaultSize
 			label={ field.label }
 			help={ field.description }

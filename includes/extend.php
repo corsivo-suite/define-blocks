@@ -18,7 +18,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-function defb_register_custom_field( string $entry_file ): void {
+function defb_register_custom_field( string $entry_file, array $field_types = [] ): void {
+	if ( $field_types ) {
+		$GLOBALS['defb_custom_field_types'] = array_values( array_unique( array_merge( $GLOBALS['defb_custom_field_types'] ?? [], array_map( 'sanitize_key', $field_types ) ) ) );
+	} else {
+		$GLOBALS['defb_untyped_custom_fields'] = true;
+	}
 	$base_url = plugin_dir_url( $entry_file );
 	$base_dir = plugin_dir_path( $entry_file );
 	$handle   = 'defb-cf-' . basename( dirname( $entry_file ) );

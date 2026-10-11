@@ -41,7 +41,11 @@ export function createFieldGeocoder(provider, field, keys) {
   }
 
   if (provider === "osm") {
-    return createOsmGeocoder({ language: field.language });
+    return createOsmGeocoder({
+      language: field.language,
+      searchEndpoint: field.searchEndpoint,
+      reverseEndpoint: field.reverseEndpoint,
+    });
   }
 
   return createGoogleGeocoder({

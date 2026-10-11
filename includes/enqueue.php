@@ -152,7 +152,6 @@ function defb_rebase_css_urls( string $css, string $source_url ): string {
 }
 
 function defb_scope_preview_css( string $css, string $scope = '.defb-preview' ): string {
-	$css = preg_replace( '~/\*.*?\*/~s', '', $css ) ?? $css;
 	return defb_scope_css_rules( $css, $scope );
 }
 
@@ -162,7 +161,7 @@ function defb_scope_css_rules( string $css, string $scope ): string {
 	$len    = strlen( $css );
 
 	while ( $offset < $len ) {
-		$brace = strpos( $css, '{', $offset );
+		$brace = defb_find_css_delimiter( $css, '{', $offset );
 		if ( $brace === false ) {
 			$out .= substr( $css, $offset );
 			break;
@@ -174,9 +173,8 @@ function defb_scope_css_rules( string $css, string $scope ): string {
 			break;
 		}
 
-		$prelude = substr( $css, $offset, $brace - $offset );
-		$semicolon = strrpos( $prelude, ';' );
-		if ( $semicolon !== false ) {
+		$prelude = defb_strip_css_comments( substr( $css, $offset, $brace - $offset ) );
+		while ( ( $semicolon = defb_find_css_delimiter( $prelude, ';' ) ) !== false ) {
 			$out    .= substr( $prelude, 0, $semicolon + 1 );
 			$prelude = substr( $prelude, $semicolon + 1 );
 		}
@@ -201,6 +199,70 @@ function defb_scope_css_rules( string $css, string $scope ): string {
 	}
 
 	return $out;
+}
+
+function defb_strip_css_comments( string $css ): string {
+	$result = '';
+	$quote = null;
+	$length = strlen( $css );
+	for ( $index = 0; $index < $length; $index++ ) {
+		$character = $css[ $index ];
+		if ( $character === '\\' ) {
+			$result .= $character . ( $css[ ++$index ] ?? '' );
+			continue;
+		}
+		if ( $quote !== null ) {
+			if ( $character === $quote ) {
+				$quote = null;
+			}
+		} elseif ( $character === '"' || $character === "'" ) {
+			$quote = $character;
+		} elseif ( $character === '/' && ( $css[ $index + 1 ] ?? '' ) === '*' ) {
+			$end = strpos( $css, '*/', $index + 2 );
+			if ( $end === false ) {
+				break;
+			}
+			$index = $end + 1;
+			continue;
+		}
+		$result .= $character;
+	}
+	return $result;
+}
+
+function defb_find_css_delimiter( string $css, string $delimiter, int $offset = 0 ): int|false {
+	$quote = null;
+	$depth = 0;
+	$length = strlen( $css );
+	for ( $index = $offset; $index < $length; $index++ ) {
+		$character = $css[ $index ];
+		if ( $character === '\\' ) {
+			$index++;
+			continue;
+		}
+		if ( $quote !== null ) {
+			if ( $character === $quote ) {
+				$quote = null;
+			}
+			continue;
+		}
+		if ( $character === '"' || $character === "'" ) {
+			$quote = $character;
+		} elseif ( $character === '/' && ( $css[ $index + 1 ] ?? '' ) === '*' ) {
+			$end = strpos( $css, '*/', $index + 2 );
+			if ( $end === false ) {
+				return false;
+			}
+			$index = $end + 1;
+		} elseif ( $character === '(' || $character === '[' ) {
+			$depth++;
+		} elseif ( $character === ')' || $character === ']' ) {
+			$depth = max( 0, $depth - 1 );
+		} elseif ( $character === $delimiter && $depth === 0 ) {
+			return $index;
+		}
+	}
+	return false;
 }
 
 function defb_find_css_block_end( string $css, int $start ): ?int {
@@ -258,11 +320,8 @@ function defb_scope_css_selectors( string $selector_list, string $scope ): strin
 			if ( $selector === '' || str_starts_with( $selector, $scope ) ) {
 				return $selector;
 			}
-			if ( str_starts_with( $selector, ':root' ) ) {
-				return $scope . substr( $selector, 5 );
-			}
-			if ( preg_match( '/^(html|body)(?=$|[\s.#:\[>+~])/', $selector ) ) {
-				return preg_replace( '/^(html|body)(?=$|[\s.#:\[>+~])/', $scope, $selector, 1 );
+			if ( preg_match( '/^(?::root|html|body)(?=$|[\s.#:\[>+~])/i', $selector ) ) {
+				return preg_replace( '/^(?:(?::root|html|body)(?=$|[\s.#:\[>+~])(?:\s+(?:>\s*)?(?=(?::root|html|body)(?=$|[\s.#:\[>+~])))?)+/i', $scope, $selector );
 			}
 			return $scope . ' ' . $selector;
 		},
@@ -341,12 +400,14 @@ add_action( 'enqueue_block_editor_assets', static function (): void {
 	);
 
 	$blocks = array_map( static function ( array $block ): array {
+		defb_check_block_schema( $block );
+		defb_register_server_block( $block );
 		unset( $block['render'] );
 
 		$block['supports'] = defb_block_supports( $block );
 		$block['_schema']  = defb_resolve_schema( $block );
 
-		$defaults = defb_collect_defaults( $block['_schema'] );
+		$defaults = defb_hydrate_values( [], $block['_schema'] );
 		if ( $defaults ) {
 			$block['_defaults'] = $defaults;
 		}
@@ -374,6 +435,7 @@ add_action( 'enqueue_block_editor_assets', static function (): void {
 
 	wp_add_inline_script( 'defb-editor', 'window.defineBlocks = ' . wp_json_encode( [
 		'blocks'       => defb_strip_closures( $blocks ),
+		'debug'        => (bool) apply_filters( 'defb_editor_debug', defined( 'WP_DEBUG' ) && WP_DEBUG ),
 		'keys'         => [
 			'googleMaps' => $google_key,
 			'mapbox'     => $mapbox_key,

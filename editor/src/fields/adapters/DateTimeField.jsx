@@ -18,7 +18,7 @@ const getPlaceholder = (mode) => {
 };
 
 export default function DateTimeField({
-  name,
+  id,
   field,
   type,
   value,
@@ -35,7 +35,7 @@ export default function DateTimeField({
 
   return (
     <DateTimeControl
-      id={name}
+      id={id}
       label={field.label}
       help={field.description}
       error={error}

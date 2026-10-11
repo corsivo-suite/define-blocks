@@ -18,11 +18,6 @@ msgstr ""
 msgid "Define Blocks"
 msgstr "Define Blocks"
 
-#. Plugin URI of the plugin
-#: define-blocks.php
-msgid "https://github.com/salvatorecorsi/define-blocks"
-msgstr "https://github.com/salvatorecorsi/define-blocks"
-
 #. Description of the plugin
 #: define-blocks.php
 msgid "Define native blocks with pure PHP."
@@ -47,53 +42,53 @@ msgid "Insufficient permissions."
 msgstr "Permessi insufficienti."
 
 #: includes/api.php:46
-#: includes/api.php:170
-#: includes/api.php:228
+#: includes/api.php:198
+#: includes/api.php:261
 msgid "Post not found."
 msgstr "Contenuto non trovato."
 
-#: includes/api.php:89
-#: includes/api.php:117
+#: includes/api.php:103
+#: includes/api.php:131
 msgid "Invalid post type."
 msgstr "Tipo di contenuto non valido."
 
-#: includes/api.php:212
+#: includes/api.php:241
 msgid "Block not found."
 msgstr "Blocco non trovato."
 
-#: includes/api.php:256
+#: includes/api.php:295
 msgid "Render failed."
 msgstr "Rendering fallito."
 
-#: includes/register.php:179
+#: includes/register.php:195
 msgid "Panel"
 msgstr "Pannello"
 
-#: includes/api.php:145
+#: includes/api.php:159
 msgid "This meta field is not available."
 msgstr "Questo campo meta non è disponibile."
 
-#: includes/api.php:159
+#: includes/api.php:187
 msgid "You do not have permission to read this post."
 msgstr "Non hai i permessi per leggere questo contenuto."
 
-#: editor/src/fields/adapters/GeocoderField.jsx:136
-#: editor/src/fields/adapters/MapField.jsx:37
+#: editor/src/fields/adapters/GeocoderField.jsx:138
+#: editor/src/fields/adapters/MapField.jsx:39
 msgid "Reverse geocoding failed."
 msgstr "Geocodifica inversa non riuscita."
 
-#: editor/src/fields/adapters/MapField.jsx:29
-#: editor/src/fields/adapters/MapField.jsx:243
+#: editor/src/fields/adapters/MapField.jsx:31
+#: editor/src/fields/adapters/MapField.jsx:249
 msgid "Map"
 msgstr "Mappa"
 
-#: editor/src/fields/adapters/GeocoderField.jsx:128
-#: editor/src/fields/adapters/MapField.jsx:32
+#: editor/src/fields/adapters/GeocoderField.jsx:130
+#: editor/src/fields/adapters/MapField.jsx:34
 msgid "Search address…"
 msgstr "Cerca indirizzo…"
 
-#: editor/src/fields/adapters/GeocoderField.jsx:137
-#: editor/src/fields/adapters/MapField.jsx:38
+#: editor/src/fields/adapters/GeocoderField.jsx:139
+#: editor/src/fields/adapters/MapField.jsx:40
 msgid "Address"
 msgstr "Indirizzo"
 
@@ -114,17 +109,17 @@ msgid "Remove image"
 msgstr "Rimuovi immagine"
 
 #: editor/src/fields/adapters/control-i18n.js:4
-#: editor/src/fields/adapters/RepeaterField.jsx:32
+#: editor/src/fields/adapters/RepeaterField.jsx:38
 #, js-format
 msgid "Remove %s"
 msgstr "Rimuovi %s"
 
 #: editor/src/fields/adapters/ChipsField.jsx:32
-#: editor/src/fields/adapters/TaxonomyField.jsx:137
+#: editor/src/fields/adapters/TaxonomyField.jsx:79
 msgid "Create"
 msgstr "Crea"
 
-#: editor/src/fields/adapters/RepeaterField.jsx:84
+#: editor/src/fields/adapters/RepeaterField.jsx:106
 #, js-format
 msgid "Item %d"
 msgstr "Elemento %d"
@@ -135,19 +130,19 @@ msgstr "Elemento %d"
 msgid "Remove"
 msgstr "Rimuovi"
 
-#: editor/src/fields/adapters/GeocoderField.jsx:101
-#: editor/src/fields/adapters/MapField.jsx:226
+#: editor/src/fields/adapters/GeocoderField.jsx:103
+#: editor/src/fields/adapters/MapField.jsx:232
 #, js-format
 msgid "API key missing. Add it via the %s filter."
 msgstr "Chiave API mancante. Aggiungila tramite il filtro %s."
 
-#: editor/src/fields/adapters/GeocoderField.jsx:138
-#: editor/src/fields/adapters/MapField.jsx:39
+#: editor/src/fields/adapters/GeocoderField.jsx:140
+#: editor/src/fields/adapters/MapField.jsx:41
 msgid "Latitude"
 msgstr "Latitudine"
 
-#: editor/src/fields/adapters/GeocoderField.jsx:139
-#: editor/src/fields/adapters/MapField.jsx:40
+#: editor/src/fields/adapters/GeocoderField.jsx:141
+#: editor/src/fields/adapters/MapField.jsx:42
 msgid "Longitude"
 msgstr "Longitudine"
 
@@ -189,7 +184,7 @@ msgstr "Aggiungi immagini"
 msgid "Video preview"
 msgstr "Anteprima video"
 
-#: editor/src/fields/adapters/RepeaterField.jsx:193
+#: editor/src/fields/adapters/RepeaterField.jsx:223
 msgid "Add Item"
 msgstr "Aggiungi elemento"
 
@@ -197,41 +192,40 @@ msgstr "Aggiungi elemento"
 msgid "Search posts…"
 msgstr "Cerca contenuti…"
 
-#: editor/src/fields/adapters/TaxonomyField.jsx:86
-#: editor/src/fields/adapters/TaxonomyField.jsx:115
+#: editor/src/fields/adapters/TaxonomyField.jsx:87
 msgid "Could not load the terms."
 msgstr "Impossibile caricare i termini."
 
-#: editor/src/fields/adapters/TaxonomyField.jsx:197
+#: editor/src/fields/adapters/TaxonomyField.jsx:163
 msgid "Could not create the term."
 msgstr "Impossibile creare il termine."
 
-#: editor/src/block/BlockPreview.jsx:57
+#: editor/src/block/BlockPreview.jsx:75
 msgid "The preview request failed."
 msgstr "La richiesta di anteprima non è riuscita."
 
-#: editor/src/block/BlockPreview.jsx:84
-#: editor/src/block/BlockPreview.jsx:100
+#: editor/src/block/BlockPreview.jsx:110
+#: editor/src/block/BlockPreview.jsx:126
 msgid "Back to editor"
 msgstr "Torna all’editor"
 
-#: editor/src/block/BlockPreview.jsx:94
+#: editor/src/block/BlockPreview.jsx:120
 msgid "This block returned empty output."
 msgstr "Questo blocco ha restituito un output vuoto."
 
-#: editor/src/block/Edit.jsx:75
+#: editor/src/block/Edit.jsx:97
 msgid "Editor"
 msgstr "Editor"
 
-#: editor/src/block/Edit.jsx:75
+#: editor/src/block/Edit.jsx:98
 msgid "Preview"
 msgstr "Anteprima"
 
-#: editor/src/block/Edit.jsx:85
+#: editor/src/block/Edit.jsx:115
 msgid "Expand"
 msgstr "Espandi"
 
-#: editor/src/block/Edit.jsx:85
+#: editor/src/block/Edit.jsx:116
 msgid "Collapse"
 msgstr "Comprimi"
 
@@ -271,28 +265,28 @@ msgstr "Nessuna immagine selezionata."
 msgid "Gallery images"
 msgstr "Immagini della galleria"
 
-#: editor/src/fields/adapters/GeocoderField.jsx:129
-#: editor/src/fields/adapters/MapField.jsx:33
+#: editor/src/fields/adapters/GeocoderField.jsx:131
+#: editor/src/fields/adapters/MapField.jsx:35
 msgid "Searching addresses"
 msgstr "Ricerca indirizzi in corso"
 
-#: editor/src/fields/adapters/GeocoderField.jsx:130
-#: editor/src/fields/adapters/MapField.jsx:34
+#: editor/src/fields/adapters/GeocoderField.jsx:132
+#: editor/src/fields/adapters/MapField.jsx:36
 msgid "No addresses found."
 msgstr "Nessun indirizzo trovato."
 
-#: editor/src/fields/adapters/GeocoderField.jsx:131
-#: editor/src/fields/adapters/MapField.jsx:35
+#: editor/src/fields/adapters/GeocoderField.jsx:133
+#: editor/src/fields/adapters/MapField.jsx:37
 msgid "Address search failed."
 msgstr "Ricerca dell’indirizzo non riuscita."
 
-#: editor/src/fields/adapters/GeocoderField.jsx:132
-#: editor/src/fields/adapters/MapField.jsx:36
+#: editor/src/fields/adapters/GeocoderField.jsx:134
+#: editor/src/fields/adapters/MapField.jsx:38
 msgid "Type at least 2 characters to search."
 msgstr "Digita almeno 2 caratteri per cercare."
 
-#: editor/src/fields/adapters/GeocoderField.jsx:140
-#: editor/src/fields/adapters/MapField.jsx:41
+#: editor/src/fields/adapters/GeocoderField.jsx:142
+#: editor/src/fields/adapters/MapField.jsx:43
 msgid "Clear location"
 msgstr "Cancella posizione"
 
@@ -300,79 +294,79 @@ msgstr "Cancella posizione"
 msgid "URL"
 msgstr "URL"
 
-#: editor/src/fields/adapters/MapField.jsx:30
+#: editor/src/fields/adapters/MapField.jsx:32
 msgid "Loading map"
 msgstr "Caricamento mappa"
 
-#: editor/src/fields/adapters/MapField.jsx:31
+#: editor/src/fields/adapters/MapField.jsx:33
 msgid "The map could not be loaded."
 msgstr "Impossibile caricare la mappa."
 
-#: editor/src/fields/adapters/MapField.jsx:136
+#: editor/src/fields/adapters/MapField.jsx:142
 msgid "This map style is not supported. The default Mapbox style is being used."
 msgstr "Questo stile della mappa non è supportato. Verrà utilizzato lo stile Mapbox predefinito."
 
-#: editor/src/fields/adapters/MapField.jsx:143
+#: editor/src/fields/adapters/MapField.jsx:149
 msgid "Map tiles could not be loaded. Check the provider configuration."
 msgstr "Impossibile caricare le tile della mappa. Verifica la configurazione del provider."
 
-#: editor/src/fields/adapters/RepeaterField.jsx:23
+#: editor/src/fields/adapters/RepeaterField.jsx:29
 #, js-format
 msgid "Expand %s"
 msgstr "Espandi %s"
 
-#: editor/src/fields/adapters/RepeaterField.jsx:26
+#: editor/src/fields/adapters/RepeaterField.jsx:32
 #, js-format
 msgid "Collapse %s"
 msgstr "Comprimi %s"
 
-#: editor/src/fields/adapters/RepeaterField.jsx:29
+#: editor/src/fields/adapters/RepeaterField.jsx:35
 #, js-format
 msgid "Duplicate %s"
 msgstr "Duplica %s"
 
-#: editor/src/fields/adapters/RepeaterField.jsx:194
+#: editor/src/fields/adapters/RepeaterField.jsx:224
 msgid "No items."
 msgstr "Nessun elemento."
 
-#: editor/src/fields/adapters/RepeaterField.jsx:195
+#: editor/src/fields/adapters/RepeaterField.jsx:225
 msgid "Repeater items"
 msgstr "Elementi del repeater"
 
-#: editor/src/engine/validation.js:45
+#: editor/src/engine/validation.js:94
 msgid "This field is required"
 msgstr "Questo campo è obbligatorio"
 
-#: editor/src/engine/validation.js:50
+#: editor/src/engine/validation.js:101
 #, js-format
 msgid "Minimum %d items"
 msgstr "Minimo %d elementi"
 
-#: editor/src/engine/validation.js:53
+#: editor/src/engine/validation.js:107
 #, js-format
 msgid "Maximum %d items"
 msgstr "Massimo %d elementi"
 
-#: editor/src/engine/validation.js:65
+#: editor/src/engine/validation.js:123
 #, js-format
 msgid "Minimum %d characters"
 msgstr "Minimo %d caratteri"
 
-#: editor/src/engine/validation.js:68
+#: editor/src/engine/validation.js:132
 #, js-format
 msgid "Maximum %d characters"
 msgstr "Massimo %d caratteri"
 
-#: editor/src/engine/validation.js:75
+#: editor/src/engine/validation.js:142
 msgid "Invalid format"
 msgstr "Formato non valido"
 
-#: editor/src/engine/validation.js:82
+#: editor/src/engine/validation.js:152
 #, js-format
 msgid "Minimum value is %s"
 msgstr "Il valore minimo è %s"
 
-#: editor/src/engine/validation.js:85
+#: editor/src/engine/validation.js:161
 #, js-format
 msgid "Maximum value is %s"
 msgstr "Il valore massimo è %s"
@@ -472,3 +466,52 @@ msgstr "Ricerca link in corso…"
 #: editor/src/fields/adapters/control-i18n.js:75
 msgid "Unable to search links."
 msgstr "Impossibile cercare i link."
+
+#. Plugin URI of the plugin
+#: define-blocks.php
+msgid "https://github.com/corsivo-suite/define-blocks"
+msgstr ""
+
+#: includes/api.php:367
+msgid "Invalid taxonomy."
+msgstr "Tassonomia non valida."
+
+#: includes/api.php:371
+msgid "You do not have permission to assign terms."
+msgstr "Non hai i permessi per assegnare termini."
+
+#: editor/src/fields/adapters/TaxonomyField.jsx:81
+msgid "Search terms…"
+msgstr "Cerca termini…"
+
+#: editor/src/fields/FieldErrorBoundary.jsx:32
+msgid "This field could not be loaded."
+msgstr "Non è stato possibile caricare questo campo."
+
+#: includes/api.php:62
+msgid "You do not have permission to edit this meta field."
+msgstr "Non hai i permessi per modificare questo campo meta."
+
+#: includes/api.php:70
+msgid "The field value is invalid."
+msgstr "Il valore del campo non è valido."
+
+#: includes/values.php:52
+msgid "The field value has an invalid format."
+msgstr "Il valore del campo ha un formato non valido."
+
+#: editor/src/engine/validation.js:87
+msgid "Enter a valid number"
+msgstr "Inserisci un numero valido"
+
+#: editor/src/fields/adapters/FieldGeocoderControl.jsx:57
+msgid "Search address"
+msgstr "Cerca indirizzo"
+
+#: editor/src/fields/adapters/FieldGeocoderControl.jsx:73
+msgid "Search"
+msgstr "Cerca"
+
+#: editor/src/engine/validation.js:88
+msgid "Invalid field value"
+msgstr "Valore del campo non valido"

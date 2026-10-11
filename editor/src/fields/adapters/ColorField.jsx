@@ -3,7 +3,7 @@ import { __ } from "@wordpress/i18n";
 import { ColorControl } from "@corsivo-suite/wp-admin-ui/color-control";
 
 export default function ColorField({
-  name,
+  id,
   field,
   value,
   onChange,
@@ -17,7 +17,7 @@ export default function ColorField({
 
   return (
     <ColorControl
-      id={name}
+      id={id}
       label={field.label}
       help={field.description}
       error={error}

@@ -2,10 +2,10 @@ import { __ } from '@wordpress/i18n';
 import { VideoControl } from '@corsivo-suite/wp-admin-ui/video-control';
 import { getVideoEmbedUrl } from './video-preview';
 
-export default function VideoField( { name, field, value, onChange, onBlur } ) {
+export default function VideoField( { id, field, value, onChange, onBlur } ) {
 	return (
 		<VideoControl
-			id={ name }
+			id={ id }
 			label={ field.label }
 			help={ field.description }
 			value={ value ?? '' }

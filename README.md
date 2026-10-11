@@ -94,6 +94,22 @@ define_block_type( 'namespace/block-name', [
 | `schema` | `array` | Field definitions -- see [Schema](#schema) |
 | `render` | `callable\|string\|null` | Render callback, file path, or null to auto-derive |
 | `wrapperClass` | `string` | Extra CSS class on the block wrapper `<div>` |
+| `parent` | `string[]` | Offer this block only as a direct child of the listed block types |
+| `ancestor` | `string[]` | Offer this block anywhere inside the listed ancestor types |
+| `usesContext` | `string[]` | Native context values consumed by the block |
+| `providesContext` | `array` | Native context-name to top-level attribute-name mapping |
+
+### Nested blocks and context
+
+These optional properties belong beside `schema` and `render` in `define_block_type()`. They are passed to both WordPress registrations. `parent` and `ancestor` control insertion in Gutenberg; they do not remove previously saved blocks or replace the container's `allowedBlocks` setting.
+
+For example, an item can declare `'parent' => [ 'site/collection' ]` and `'usesContext' => [ 'site/collectionValues' ]`. The collection declares `'providesContext' => [ 'site/collectionValues' => 'values' ]` to make its values available to descendants that request that context.
+
+WordPress maps `providesContext` to a **top-level attribute**. Define Blocks stores schema fields together in `values`, so provide that complete object and read the required key from it. A mapping to `values.layout` does not select an individual field. No additional attributes or copies of field values are created.
+
+Provided context follows the native attribute values, including top-level defaults registered on the block type. Per-post field defaults applied inside the PHP renderer do not retroactively alter descendant context. The editor applies field defaults to its normal `values` attribute; once saved, those values are available to consumers as usual.
+
+Context reaches the native editor `edit` props and the PHP renderer through `$block->context`. The server also consumes `postId` and `postType` to resolve the current post's definition, including within a Query Loop. Declare them in `usesContext` when your editor code needs them. Context is not available to Gutenberg's `save` function.
 
 ### Settings
 
@@ -114,6 +130,8 @@ define_block_type( 'namespace/block-name', [
 | `hideTitle` | `bool` | `false` | Hide the block title bar |
 
 Shorthand: `'frontend_preview' => true` at the top level sets both `frontendPreview` and `startPreview`.
+
+InnerBlocks stays mounted while the block is collapsed or in preview, so templates initialize even with `startPreview`. Save validation follows the document's block tree, including children whose editor controls are currently hidden.
 
 ### Block supports
 
@@ -139,6 +157,14 @@ Spacing and dimensions are opt-in — declare them explicitly to get the Dimensi
 ```
 
 Override through `supports`. Full list in the [WP docs](https://developer.wordpress.org/block-editor/reference-guides/block-api/block-supports/).
+
+### Schema diagnostics
+
+With `WP_DEBUG` enabled, invalid declarations produce a developer notice through `_doing_it_wrong()`, including the block name and field path. Checks cover unknown properties and field types, invalid scope/field structures, duplicate names in the same saved values object, malformed conditions, missing field references, and unsupported InnerBlocks placement. A block can have one InnerBlocks area; placing it inside a repeater is unsupported.
+
+Missing render callbacks are valid and do not produce a notice. Diagnostics do not prevent registration of otherwise usable blocks. `defb_schema_diagnostics( $definition )` returns the diagnostic entries without emitting notices, including when `WP_DEBUG` is disabled.
+
+Custom types registered with a PHP sanitizer are recognized automatically. Bundles can also declare their types with `defb_register_custom_field( __FILE__, [ 'my-custom-type' ] )`. The original one-argument call remains supported; since its JavaScript types cannot be known in PHP, unknown-type notices are suppressed when such a bundle is present. Use `defb_schema_field_types` and `defb_schema_field_properties` to declare extensions to those registries.
 
 ## Schema
 
@@ -365,6 +391,8 @@ If all fields go in the content area, skip the scope wrapper:
 
 `inline` is available to every field type. The field keeps its normal conditions and validation; the schema author is responsible for choosing controls that fit on a single header row. Nested fields are not promoted by an `inline` flag declared inside a group or tab panel.
 
+Explicit defaults are applied recursively to new and existing repeater rows, including fields inside groups and tabs. Groups and tabs share their containing row's values object. Existing values, unknown keys, and row IDs are preserved; an explicit empty string or `null` does not receive a default. Numeric fields retain numeric values through editing, conditions, preview, and server-side reads.
+
 `tabpanels` groups fields into tabs:
 
 ```php
@@ -409,6 +437,8 @@ If all fields go in the content area, skip the scope wrapper:
 ],
 ```
 
+The selector searches terms after the first character instead of downloading the full taxonomy. Results are paginated, hierarchical labels include their ancestor path, and existing selections are hydrated in batches without changing the saved `{ value, label }` shape. `allowCreate => true` continues to use the taxonomy's native REST controller.
+
 `google-map` and `google-geocoder` use the Google Maps key:
 
 ```php
@@ -424,6 +454,8 @@ add_filter( 'defb_mapbox_key', fn() => 'YOUR_MAPBOX_TOKEN' );
 ```
 
 `mapbox-map` uses the Mapbox Static Tiles and Geocoding APIs without bundling the Mapbox GL SDK. `styleUrl` accepts `mapbox://styles/{owner}/{style}`, Mapbox Styles API URLs, raster tile templates and inline raster style objects containing a `tiles` source. Vector style objects and Mapbox Standard cannot be rendered through Static Tiles: the editor reports the fallback and uses Streets v12. The field type, saved value shape, search, click selection and draggable pin remain backward compatible. Custom `attribution` is appended without removing the required Mapbox and OpenStreetMap attribution; use it for any additional credits required by custom data sources. Static Tiles usage is billed by Mapbox per API request. Geocoding requests always set `permanent=true` because selected results are persisted in block attributes; the Mapbox account and plan must permit permanent result storage.
+
+`osm-map` and `osm-geocoder` use explicit Search/Enter with the public Nominatim service; typing alone does not send requests. Public search and reverse lookups share a queue and a bounded cache within the editor page. This queue coordinates that page, not concurrent users across a site. Configure `searchEndpoint` and `reverseEndpoint` for a dedicated Nominatim-compatible service when broader traffic coordination is needed; dedicated search endpoints retain autocomplete.
 
 `innerblocks` wraps WP's InnerBlocks:
 
@@ -510,6 +542,12 @@ The plugin tries these in order:
 3. `render` is null -- looks for a function matching the block name: `myplugin/hero-banner` tries `myplugin_hero_banner_render()`
 4. Nothing matched -- returns the raw InnerBlocks content
 
+Declare the block in the site plugin and define its render callback in whichever plugin or theme owns its presentation. Callback availability is checked when rendering, so a theme function does not need a second frontend registration. Without a matching renderer, a block with children returns their content and a block without children produces no output.
+
+Schema defaults are resolved for the post being rendered, using the same per-post `defb_register` definition as the Read API and preview. Declare block types globally; use the post-specific filter to adjust their definitions and defaults. Native metadata such as `parent` and `providesContext` belongs to the block type and should remain stable between posts.
+
+Keep frontend CSS and JavaScript next to that renderer and load them with the native WordPress asset APIs, such as `wp_enqueue_block_style()` and the script enqueue hooks. Theme ownership is optional. Custom React fields continue to supply editor controls; they do not automatically become frontend JavaScript. Preview CSS can still be supplied through `defb_preview_style`.
+
 So you can do any of these:
 
 ```php
@@ -573,6 +611,12 @@ The old name `persistAs` still works.
 
 Return `false` or a string to skip saving the field.
 
+Both normal saves and `/defb/v1/meta` normalize field values before validation. Validators and `saveCallback` receive the normalized value that is eligible for persistence. Malformed shapes and values that fail validation do not update their meta mirrors. The meta endpoint returns a field error instead of bypassing validation.
+
+Authenticated saves also require `edit_post_meta` for each mirrored key, honoring registered meta authorization callbacks. Programmatic `save_post` calls without a current user retain the normal WordPress ability to update metadata; the REST endpoints still require an authorized user. A `saveCallback` owns the authorization of any additional writes it performs.
+
+The `save_post` hook validates mirror writes after WordPress has stored the post. It does not reject or rewrite `post_content`. The editor's document validation prevents saving invalid visible fields, including invalid fields in hidden child editors; external integrations must validate their own content writes.
+
 ## Read API
 
 Get block values from any post, without parsing blocks yourself.
@@ -617,6 +661,8 @@ add_filter( 'defb_preview_style', function ( $sources ) {
 ```
 
 You can also set `frontendPreview` and `startPreview` separately in `settings` if you want the preview available but not active by default.
+
+Preview requests are debounced and keep the last successful HTML visible while refreshing. Obsolete requests are cancelled and ignored. A short-lived cache includes attributes, child content, and block context, so previews with different inherited values are kept separate.
 
 ## Custom field types
 
@@ -672,6 +718,8 @@ Props your component gets:
 | Prop | Type | What it is |
 |------|------|------------|
 | `name` | `string` | Field key in the values object |
+| `id` | `string` | Unique DOM ID for the control and its associated label; distinct from the saved field name |
+| `context` | `object` | Inherited Gutenberg context requested by the block's `usesContext` declaration |
 | `field` | `object` | The full field definition from the schema |
 | `value` | `mixed` | Current value |
 | `onChange` | `function` | Call with the new value |
@@ -686,6 +734,9 @@ Props your component gets:
 | `defb_register` | filter | Collects block registrations. Gets `(array $blocks, ?int $post_id)` |
 | `defb_preview_style` | filter | CSS file paths or raw CSS for the preview scope |
 | `defb_google_maps_key` | filter | Google Maps API key |
+| `defb_editor_debug` | filter | Enable conditional console diagnostics for field render failures |
+| `defb_schema_field_types` | filter | Extend the field types recognized by PHP schema diagnostics |
+| `defb_schema_field_properties` | filter | Extend recognized field properties; receives the property list and block definition |
 
 ### JS
 
@@ -697,6 +748,7 @@ Props your component gets:
 | `defb.toggle.{blockName}.{field}` | action | Fires when a checkbox is toggled |
 | `defb.toolbar.toggle` | action | Fires when a toolbar toggle changes |
 | `defb.parse.{parser}` | filter | Custom parsing for `text-with-parser` fields |
+| `defb.fieldRenderError` | action | Receives `(error, details)` when a lazy field fails to render |
 
 These use the `@wordpress/hooks` API:
 
@@ -723,6 +775,12 @@ window.DefineBlocks = {
     Shared: {},         // shared deps for extensions
 };
 ```
+
+## Development checks
+
+From `editor`, run `npm test -- --watch=false`, `npm run lint`, and `npm run build`. The plugin loads the generated files in `editor/build`.
+
+From the plugin directory, run `php tests/php/run.php`, `php tests/php/values.php`, and `php tests/php/registration.php`. The last runner uses the surrounding WordPress checkout, or the directory supplied through `DEFB_WP_ROOT`, to exercise native block rendering and context. These runners isolate persistence in memory and do not boot the site or access its database.
 
 ## Credits
 

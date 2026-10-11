@@ -4,7 +4,7 @@ import { getUrlI18n } from "./control-i18n";
 import { loadPostOptions } from "./post-options";
 
 export default function UrlField({
-  name,
+  id,
   field,
   value,
   onChange,
@@ -24,7 +24,7 @@ export default function UrlField({
 
   return (
     <UrlControl
-      id={name}
+      id={id}
       label={field.label}
       help={field.description}
       error={error}

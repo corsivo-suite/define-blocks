@@ -1,4 +1,29 @@
-= Non rilasciato — 1.1.0 =
+= Non rilasciato — 11/10/2026 =
+* Conservate le modifiche concorrenti dei repeater durante il reverse geocoding, anche dopo riordinamenti; ignorate le righe rimosse.
+* Allineate le condizioni numeriche PHP ed editor per valori assenti, nulli e vuoti.
+* CSS delle mappe disponibile nell'iframe dell'editor tramite asset principale, mantenendo lazy il JavaScript.
+* InnerBlocks inizializzato e mantenuto montato anche nelle tab inattive.
+* Preview tramite rendering nativo con filtri finali e markup richtext consentito nel contesto ereditato.
+* Select con postType nella toolbar collegato alla ricerca dei post esistente.
+* Superati 110 test JavaScript in 30 suite e 46 test PHP su ciascuna versione 8.1.31/8.4.0; sintassi dei 23 file PHP e lint JavaScript/SCSS verificati. Build completata con 11 asset; CSS Leaflet/MapCanvas verificato in index.css e index-rtl.css. Solo il consueto avviso informativo webpack sulla dimensione dell'entrypoint.
+
+= Non rilasciato — 25/09/2026 =
+* includes/api.php: preview limitata a utenti che possono modificare contenuti, post type ammessi e oggetti leggibili.
+* tests/php/preview-permissions.php: regressioni su clienti WooCommerce, coupon e permessi sul singolo oggetto.
+* Regressioni isolate superate su PHP 8.1 e 8.4. API pubbliche e canale di aggiornamento privato conservati; preparazione WordPress.org fuori da questa correzione.
+
+= In sviluppo — 05/09/2026 =
+* Normalizzazione e validazione coerenti fra PHP, REST ed editor; permessi edit_post_meta rispettati nei salvataggi autenticati.
+* Default ricorsivi dei repeater, valori numerici coerenti e validazione dei blocchi figli indipendente da anteprima e chiusura del contenitore.
+* Proprietà native parent, ancestor, usesContext e providesContext nella dichiarazione PHP; contesto disponibile anche ai custom field.
+* Diagnostica dello schema in sviluppo con nome del blocco e percorso del campo.
+* Schema per-post coerente fra frontend, lettura e anteprima; callback opzionale nel tema o nel plugin e fallback InnerBlocks conservati.
+* Sottoscrizioni per campo, anteprima con debounce/cache e protezione dalle risposte obsolete, ID dei controlli univoci e creazione tassonomie corretta nelle richieste concorrenti.
+* Ricerca Nominatim pubblica esplicita, endpoint OSM configurabili e scoping CSS della preview corretto per selettori complessi.
+* Documentazione, traduzioni italiane e contratti di regressione aggiornati.
+* Superati 87 test JavaScript e 38 contratti PHP per ciascuna versione 8.1/8.4; lint e build completati senza errori.
+
+= 1.1.0 — 29/08/2026 =
 * Rigenerati i bundle contro i package condivisi correnti, includendo il refresh visuale e gli asset RTL; contratti runtime invariati.
 * I figli diretti dei repeater possono essere mostrati nell'header con inline => true, senza duplicazione nel corpo.
 * Gli item del repeater formano un elenco continuo senza ombre e usano icone outline.
@@ -9,8 +34,12 @@
 * Google Maps viene caricato dal loader condiviso senza un secondo script globale.
 * La distribuzione usa soltanto gli asset compilati del plugin; il sorgente usa i package privati @corsivo-suite/* alla versione esatta 0.1.0.
 * Versione PHP allineata e sanitizzazione dei colori alpha corretta.
-* Verificati 42 test Define Blocks e 135 test package, lint, build, PHP, package dry-run e runtime audit; i warning sulla dimensione dei bundle sono non bloccanti.
-* Restano da eseguire lo smoke Gutenberg con sessione autenticata e la validazione su WordPress 6.6 reale.
+* I field pesanti e il CSS Leaflet vengono caricati in chunk asincroni senza modificare registry, schema o dati salvati.
+* Le tassonomie usano ricerca REST paginata, percorsi gerarchici e idratazione delle selezioni correnti.
+* Le chiavi saveInMeta mixed-case restano esatte in salvataggio e REST.
+* Le eccezioni dei field lazy restano isolate e attivano l'action diagnostica defb.fieldRenderError.
+* Aggiunta CI su PHP 8.1/8.4 e Node 20 con lint, test, build e package.
+* Verificati 46 test JavaScript, 6 contratti PHP/REST e 135 test package; lint, build, package e smoke Gutenberg sono verdi.
 
 = 1.0.8 — 16/07/2026 =
 * I meta saveInMeta non vengono più eliminati quando il relativo blocco non è presente nel documento.

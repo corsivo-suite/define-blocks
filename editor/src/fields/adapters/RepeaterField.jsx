@@ -1,11 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from "@wordpress/element";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "@wordpress/element";
 import { __, sprintf } from "@wordpress/i18n";
 import { Repeater } from "@corsivo-suite/wp-admin-ui/repeater";
 import { getSortableI18n } from "./control-i18n";
-import { buildEmpty } from "../../engine/values";
+import { hydrateValues, isRepeaterValue } from "../../engine/values";
 import { uid } from "../../engine/uid";
 import { evaluateCondition } from "../../engine/conditions";
-import { useBlockContext } from "../../store/hooks";
+import { useBlockContext, useFieldErrors } from "../../store/hooks";
 import { resolveType } from "../aliases";
 import { getFieldComponent } from "../registry";
 import { partitionRepeaterFields } from "../repeater";
@@ -31,13 +38,40 @@ const formatDuplicateLabel = (itemLabel) =>
 const formatRemoveLabel = (itemLabel) =>
   sprintf(__("Remove %s", "define-blocks"), itemLabel);
 
-export default function RepeaterField({ name, field, value, onChange }) {
+export default function RepeaterField({ id, name, field, value, onChange }) {
+  const generatedId = useId();
+  const fieldId = id || `defb-repeater-${generatedId}`;
+  const fields = useMemo(() => field.fields || {}, [field.fields]);
+  const validValue = value === undefined || value === null || isRepeaterValue(value);
   const rawItems = useMemo(() => (Array.isArray(value) ? value : []), [value]);
   const items = useMemo(
-    () => normalizeRepeaterItems(rawItems, uid),
-    [rawItems],
+    () =>
+      validValue
+        ? normalizeRepeaterItems(
+            rawItems.map((item) => hydrateValues(fields, item)),
+            uid,
+          )
+        : [],
+    [fields, rawItems, validValue],
   );
-  const fields = useMemo(() => field.fields || {}, [field.fields]);
+  const currentItemsRef = useRef(items);
+  const onChangeRef = useRef(onChange);
+  currentItemsRef.current = items;
+  onChangeRef.current = onChange;
+  const changeItems = useCallback((nextItems) => {
+    currentItemsRef.current = nextItems;
+    onChangeRef.current(nextItems);
+  }, []);
+  const changeItemField = useCallback((itemId, key, nextValue) => {
+    const currentItems = currentItemsRef.current;
+    const index = currentItems.findIndex((item) => item._defb_id === itemId);
+    if (index === -1) {
+      return;
+    }
+    const nextItems = [...currentItems];
+    nextItems[index] = { ...currentItems[index], [key]: nextValue };
+    changeItems(nextItems);
+  }, [changeItems]);
   const { inlineFields, bodyFields } = useMemo(
     () => partitionRepeaterFields(fields),
     [fields],
@@ -48,17 +82,24 @@ export default function RepeaterField({ name, field, value, onChange }) {
     () => repeaterFieldsNeedRootValues(fields),
     [fields],
   );
-  const { getData, subscribeAny, getFieldError, validateFields } =
-    useBlockContext();
+  const {
+    getData,
+    subscribeAny,
+    validateFields,
+    context: inheritedContext,
+  } = useBlockContext();
+  const fieldErrors = useFieldErrors(name);
   const [rootValues, setRootValues] = useState(getData);
-  const sortableI18n = getSortableI18n();
 
   useEffect(() => {
+    if (!validValue) {
+      return;
+    }
     if (!items.some((item, index) => item !== rawItems[index])) {
       return;
     }
-    onChange(items);
-  }, [items, onChange, rawItems]);
+    changeItems(items);
+  }, [changeItems, items, rawItems, validValue]);
 
   useEffect(() => {
     if (!needsRootValues) {
@@ -69,7 +110,7 @@ export default function RepeaterField({ name, field, value, onChange }) {
   }, [needsRootValues, subscribeAny]);
 
   const createItem = useCallback(
-    () => createRepeaterItem(fields, uid, buildEmpty),
+    () => createRepeaterItem(fields, uid),
     [fields],
   );
   const duplicateItem = useCallback(
@@ -88,7 +129,7 @@ export default function RepeaterField({ name, field, value, onChange }) {
 
   const renderFields = useCallback(
     (fieldDefinitions, itemContext, placement = "body") => {
-      const { item, index, onChange: onItemChange } = itemContext;
+      const { item, index } = itemContext;
       const conditionValues = { ...item, $index: index, root: rootValues };
 
       return Object.entries(fieldDefinitions || {}).map(
@@ -112,7 +153,7 @@ export default function RepeaterField({ name, field, value, onChange }) {
           const resolvedType = resolveType(fieldDefinition.type);
           const Component = getFieldComponent(resolvedType);
           const fieldPath = `${name}.${index}.${key}`;
-          const error = getFieldError(fieldPath);
+          const error = fieldErrors[fieldPath] || null;
           const style = { ...(fieldDefinition.style || {}) };
           if (fieldDefinition.width) {
             style.width = `${fieldDefinition.width}%`;
@@ -134,15 +175,14 @@ export default function RepeaterField({ name, field, value, onChange }) {
               data-field-name={fieldPath}
             >
               <Component
+                id={`${fieldId}-${item._defb_id}-${key}`}
+                context={inheritedContext}
                 name={fieldPath}
                 field={fieldDefinition}
                 type={resolvedType}
                 value={item[key]}
                 onChange={(nextValue) =>
-                  onItemChange({
-                    ...item,
-                    [key]: nextValue,
-                  })
+                  changeItemField(item._defb_id, key, nextValue)
                 }
                 onBlur={validateFields}
                 error={error}
@@ -157,7 +197,7 @@ export default function RepeaterField({ name, field, value, onChange }) {
         },
       );
     },
-    [getFieldError, name, rootValues, validateFields],
+    [changeItemField, fieldErrors, fieldId, inheritedContext, name, rootValues, validateFields],
   );
 
   const renderItemInline = useCallback(
@@ -169,13 +209,19 @@ export default function RepeaterField({ name, field, value, onChange }) {
     [bodyFields, renderFields],
   );
 
+  if (!validValue) {
+    return null;
+  }
+
+  const sortableI18n = getSortableI18n();
+
   return (
     <Repeater
-      id={name}
+      id={fieldId}
       label={field.label}
       help={field.description}
       items={items}
-      onChange={onChange}
+      onChange={changeItems}
       getItemId={getItemId}
       getItemLabel={getItemLabel}
       createItem={createItem}

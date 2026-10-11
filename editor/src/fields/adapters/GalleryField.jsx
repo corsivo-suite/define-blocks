@@ -4,7 +4,7 @@ import { getSortableI18n } from "./control-i18n";
 import { renderWordPressMediaPicker } from "./media-picker";
 import { normalizeGalleryImage } from "./value-contracts";
 
-export default function GalleryField({ name, field, value, onChange, onBlur }) {
+export default function GalleryField({ id, field, value, onChange, onBlur }) {
   const images = (Array.isArray(value) ? value : [])
     .map(normalizeGalleryImage)
     .filter((image) => image.id !== undefined && image.id !== null);
@@ -12,7 +12,7 @@ export default function GalleryField({ name, field, value, onChange, onBlur }) {
 
   return (
     <GalleryControl
-      id={name}
+      id={id}
       label={field.label}
       help={field.description}
       value={images}

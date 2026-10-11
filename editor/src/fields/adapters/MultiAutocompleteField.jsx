@@ -12,7 +12,7 @@ import {
 } from "./value-contracts";
 
 export default function MultiAutocompleteField({
-  name,
+  id,
   field,
   value,
   onChange,
@@ -62,7 +62,7 @@ export default function MultiAutocompleteField({
 
   return (
     <SelectionControl
-      id={name}
+      id={id}
       label={field.label}
       help={field.description}
       error={error}

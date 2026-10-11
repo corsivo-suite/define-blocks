@@ -8,8 +8,8 @@ import {
 import { InspectorControls } from "@wordpress/block-editor";
 import { BaseControl, Notice, PanelBody } from "@wordpress/components";
 import { __, sprintf } from "@wordpress/i18n";
-import { GeocoderControl, MapCanvas } from "@corsivo-suite/wp-admin-maps";
-import "@corsivo-suite/wp-admin-maps/leaflet.css";
+import { MapCanvas } from "@corsivo-suite/wp-admin-maps";
+import FieldGeocoderControl from "./FieldGeocoderControl";
 import {
   createFieldGeocoder,
   createFieldRenderer,
@@ -62,7 +62,7 @@ const getMetadataQuery = (metadata, fallback) => {
 };
 
 export default function MapField({
-  name,
+  id,
   field,
   type,
   value,
@@ -81,6 +81,8 @@ export default function MapField({
     mapId,
     mapOptions,
     reverseGeocodingOptions,
+    searchEndpoint,
+    reverseEndpoint,
     styleUrl,
     tileUrl,
     zoom,
@@ -94,6 +96,10 @@ export default function MapField({
   );
   const [query, setQuery] = useState(savedQuery);
   const queryRef = useRef(savedQuery);
+  const valueRef = useRef(value);
+  const onChangeRef = useRef(onChange);
+  valueRef.current = value;
+  onChangeRef.current = onChange;
   if (!reverseCoordinatorRef.current) {
     reverseCoordinatorRef.current = createReverseCoordinator();
   }
@@ -103,8 +109,10 @@ export default function MapField({
       language,
       loaderOptions,
       reverseGeocodingOptions,
+      searchEndpoint,
+      reverseEndpoint,
     }),
-    [geocodingOptions, language, loaderOptions, reverseGeocodingOptions],
+    [geocodingOptions, language, loaderOptions, reverseGeocodingOptions, searchEndpoint, reverseEndpoint],
   );
   const rendererField = useMemo(
     () => ({
@@ -160,18 +168,19 @@ export default function MapField({
     setQuery(savedQuery);
   }, [savedQuery]);
 
-  useEffect(() => () => cancelReverse(), [cancelReverse]);
+  useEffect(() => () => cancelReverse(), [cancelReverse, geocoder]);
 
   const commitLocation = useCallback(
     (nextLocation, metadata) => {
       const nextQuery = getMetadataQuery(metadata, queryRef.current);
-      const nextValue = toLegacyLocation(nextLocation, value, {
+      const nextValue = toLegacyLocation(nextLocation, valueRef.current, {
         query: nextQuery,
       });
       queryRef.current = Object.keys(nextValue).length ? nextQuery : "";
-      onChange(nextValue);
+      valueRef.current = nextValue;
+      onChangeRef.current(nextValue);
     },
-    [onChange, value],
+    [],
   );
 
   const handleGeocoderChange = useCallback(
@@ -221,7 +230,7 @@ export default function MapField({
     const filterName =
       provider === "google" ? "defb_google_maps_key" : "defb_mapbox_key";
     return (
-      <BaseControl id={name} label={field.label} help={field.description}>
+      <BaseControl id={id} label={field.label} help={field.description}>
         <Notice status="error" isDismissible={false}>
           {sprintf(
             __("API key missing. Add it via the %s filter.", "define-blocks"),
@@ -244,8 +253,8 @@ export default function MapField({
           title={field.label || __("Map", "define-blocks")}
           initialOpen
         >
-          <GeocoderControl
-            id={`${name}-location`}
+          <FieldGeocoderControl
+            id={`${id}-location`}
             value={location}
             onChange={handleGeocoderChange}
             query={query}
@@ -259,7 +268,7 @@ export default function MapField({
           />
         </PanelBody>
       </InspectorControls>
-      <BaseControl id={name} label={field.label} help={field.description}>
+      <BaseControl id={id} label={field.label} help={field.description}>
         <MapCanvas
           renderer={renderer}
           location={location}

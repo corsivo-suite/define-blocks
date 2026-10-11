@@ -1,5 +1,6 @@
 import { createElement, lazy, Suspense } from '@wordpress/element';
 import { Spinner } from '@wordpress/components';
+import FieldErrorBoundary from './FieldErrorBoundary';
 import TextInput from './types/TextInput';
 import Textarea from './types/Textarea';
 import RichText from './types/RichText';
@@ -32,9 +33,16 @@ import { resolveFieldComponent } from './registry-resolver';
 function lazyField( loader, handlesError = false ) {
 	const Component = lazy( loader );
 	const LazyField = ( props ) => createElement(
-		Suspense,
-		{ fallback: createElement( Spinner ) },
-		createElement( Component, props )
+		FieldErrorBoundary,
+		{
+			fieldName: props.name,
+			fieldType: props.type || props.field?.type,
+		},
+		createElement(
+			Suspense,
+			{ fallback: createElement( Spinner ) },
+			createElement( Component, props )
+		)
 	);
 	LazyField.handlesError = handlesError;
 	return LazyField;

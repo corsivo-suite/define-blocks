@@ -19,9 +19,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function define_block_type( string $name, array $args = [] ): void { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 	$args['name'] = $name;
+	if ( ! empty( $GLOBALS['defb_registration_complete'] ) ) {
+		defb_schema_warning( $name, 'registration', 'Register blocks before init priority 99.' );
+	}
 
 	if ( array_key_exists( 'frontend_preview', $args ) ) {
-		$args['settings'] = $args['settings'] ?? [];
+		$args['settings'] = is_array( $args['settings'] ?? null ) ? $args['settings'] : [];
 		$args['settings']['frontendPreview'] = true;
 		$args['settings']['startPreview']    = (bool) $args['frontend_preview'];
 		unset( $args['frontend_preview'] );
@@ -44,8 +47,18 @@ function defb_registered( ?int $post_id = null ): array {
 		$raw = apply_filters( 'defb_register', [], $post_id );
 
 		$indexed = [];
-		foreach ( $raw as $k => $block ) {
-			$indexed[ $block['name'] ?? $k ] = $block;
+		foreach ( is_array( $raw ) ? $raw : [] as $k => $block ) {
+			if ( ! is_array( $block ) ) {
+				defb_schema_warning( (string) $k, 'definition', 'Expected a block configuration array.' );
+				continue;
+			}
+			$name = $block['name'] ?? $k;
+			if ( ! is_string( $name ) || ! preg_match( '~^[a-z][a-z0-9-]*/[a-z][a-z0-9-]*$~', $name ) ) {
+				defb_schema_warning( (string) $k, 'name', 'Expected a namespace/block-name identifier.' );
+				continue;
+			}
+			$block['name'] = $name;
+			$indexed[ $name ] = $block;
 		}
 
 		$memo[ $key ] = $indexed;
@@ -74,16 +87,16 @@ function defb_get_blocks( int $post_id, string $block_name ): array { // phpcs:i
 	$parsed   = parse_blocks( $post->post_content );
 	$results  = [];
 	$blocks   = defb_registered( $post_id );
-	$defaults = isset( $blocks[ $block_name ] )
-		? defb_collect_defaults( defb_resolve_schema( $blocks[ $block_name ] ) )
+	$schema = isset( $blocks[ $block_name ] )
+		? defb_resolve_schema( $blocks[ $block_name ] )
 		: [];
 
-	defb_find_blocks( $parsed, $block_name, $results, $defaults );
+	defb_find_blocks( $parsed, $block_name, $results, [], $schema );
 
 	return $results;
 }
 
-function defb_find_blocks( array $blocks, string $block_name, array &$results, array $defaults = [] ): void {
+function defb_find_blocks( array $blocks, string $block_name, array &$results, array $defaults = [], array $schema = [] ): void {
 	foreach ( $blocks as $block ) {
 		if ( ! is_array( $block ) ) {
 			continue;
@@ -92,10 +105,10 @@ function defb_find_blocks( array $blocks, string $block_name, array &$results, a
 		if ( ( $block['blockName'] ?? '' ) === $block_name ) {
 			$raw_values = $block['attrs']['values'] ?? [];
 			$values     = is_array( $raw_values ) ? $raw_values : [];
-			$results[]  = array_replace( $defaults, $values );
+			$results[]  = defb_hydrate_values( array_replace( $defaults, $values ), $schema );
 		}
 		if ( ! empty( $block['innerBlocks'] ) && is_array( $block['innerBlocks'] ) ) {
-			defb_find_blocks( $block['innerBlocks'], $block_name, $results, $defaults );
+			defb_find_blocks( $block['innerBlocks'], $block_name, $results, $defaults, $schema );
 		}
 	}
 }
@@ -151,7 +164,7 @@ function defb_resolve_schema( array $block ): array {
 		'toolbar'            => [],
 	];
 
-	if ( empty( $block['schema'] ) ) {
+	if ( empty( $block['schema'] ) || ! is_array( $block['schema'] ) ) {
 		return $out;
 	}
 
@@ -165,6 +178,9 @@ function defb_resolve_schema( array $block ): array {
 	$panel_idx = 0;
 
 	foreach ( $schema as $entry ) {
+		if ( ! is_array( $entry ) ) {
+			continue;
+		}
 		$scope  = $entry['scope'] ?? null;
 		if ( $scope === null ) {
 			continue;
@@ -217,8 +233,14 @@ function defb_prepare_fields( mixed $fields ): array {
 	$out = [];
 
 	foreach ( $fields as $key => $field ) {
+		if ( ! is_array( $field ) ) {
+			continue;
+		}
 		if ( is_int( $key ) && isset( $field['name'] ) ) {
 			$fname = $field['name'];
+			if ( ! is_string( $fname ) || $fname === '' ) {
+				continue;
+			}
 			unset( $field['name'] );
 			$out[ $fname ] = defb_prepare_field( $field );
 		} elseif ( is_string( $key ) ) {
@@ -271,15 +293,18 @@ function defb_prepare_field( mixed $field ): mixed {
 		$field['type'] = $resolved;
 	}
 
-	if ( ! empty( $field['fields'] ) && is_array( $field['fields'] ) ) {
+	if ( array_key_exists( 'fields', $field ) ) {
 		$field['fields'] = defb_prepare_fields( $field['fields'] );
 	}
 
-	if ( ! empty( $field['tabs'] ) && is_array( $field['tabs'] ) ) {
+	if ( array_key_exists( 'tabs', $field ) ) {
+		$field['tabs'] = is_array( $field['tabs'] ) ? $field['tabs'] : [];
 		foreach ( $field['tabs'] as $i => $tab ) {
-			if ( ! empty( $tab['fields'] ) && is_array( $tab['fields'] ) ) {
-				$field['tabs'][ $i ]['fields'] = defb_prepare_fields( $tab['fields'] );
+			if ( ! is_array( $tab ) ) {
+				unset( $field['tabs'][ $i ] );
+				continue;
 			}
+			$field['tabs'][ $i ]['fields'] = defb_prepare_fields( $tab['fields'] ?? [] );
 		}
 	}
 
@@ -397,5 +422,5 @@ function defb_default_supports(): array {
 }
 
 function defb_block_supports( array $block ): array {
-	return array_merge( defb_default_supports(), $block['supports'] ?? [] );
+	return array_merge( defb_default_supports(), is_array( $block['supports'] ?? null ) ? $block['supports'] : [] );
 }

@@ -1,5 +1,5 @@
-import { memo, useCallback, useEffect, useState } from '@wordpress/element';
-import { useFieldValue, useBlockContext } from '../store/hooks';
+import { memo, useCallback, useEffect, useId, useState } from '@wordpress/element';
+import { useFieldValue, useFieldError, useBlockContext } from '../store/hooks';
 import { resolveType } from './aliases';
 import { getFieldComponent } from './registry';
 import { evaluateCondition } from '../engine/conditions';
@@ -14,8 +14,11 @@ const TOOLBAR_TYPE_MAP = {
 };
 
 function Dispatcher( { name, field, scope } ) {
+	const generatedId = useId();
+	const id = `defb-field-${ generatedId }`;
 	const [ value, onChange ] = useFieldValue( name );
-	const { getData, subscribeAny, getFieldError, validateFields } = useBlockContext();
+	const fieldError = useFieldError( name );
+	const { getData, subscribeAny, validateFields, context } = useBlockContext();
 
 	const hasCondition = !! ( field.condition || field.conditionHide );
 
@@ -59,9 +62,9 @@ function Dispatcher( { name, field, scope } ) {
 	const resolvedType = isToolbar && TOOLBAR_TYPE_MAP[ type ] ? TOOLBAR_TYPE_MAP[ type ] : type;
 	const Component = getFieldComponent( resolvedType );
 
-	const error = isToolbar ? null : getFieldError( name );
+	const error = isToolbar ? null : fieldError;
 
-	const fieldProps = { name, field, type, value, onChange, onBlur: validateFields, error };
+	const fieldProps = { id, name, field, type, value, onChange, onBlur: validateFields, error, context };
 	if ( isToolbar && originalType === 'number' ) {
 		fieldProps.field = { ...field, _toolbarType: 'number' };
 	}

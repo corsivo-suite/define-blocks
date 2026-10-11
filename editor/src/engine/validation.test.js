@@ -21,7 +21,92 @@ describe( 'validateField', () => {
 	} );
 
 	it( 'counts Unicode code points consistently', () => {
-		expect( validateField( '🎸', { minLength: 1, maxLength: 1 } ) ).toBeNull();
+		expect(
+			validateField( '🎸', { minLength: 1, maxLength: 1 } )
+		).toBeNull();
+	} );
+
+	it( 'rejects invalid numeric values without treating an optional empty input as zero', () => {
+		const field = { type: 'text', originalType: 'number', min: 2 };
+		expect( validateField( '', field ) ).toBeNull();
+		expect( validateField( null, field ) ).toBeNull();
+		expect( validateField( '12px', field ) ).toBe( 'Enter a valid number' );
+		expect( validateField( Infinity, field ) ).toBe(
+			'Enter a valid number'
+		);
+		expect( validateField( '12', field ) ).toBeNull();
+		expect( validateField( 1, field ) ).toBe( 'Minimum value is 2' );
+	} );
+
+	it( 'validates required and minimum text length after tag and whitespace normalization', () => {
+		expect(
+			validateField( '<b></b>', { type: 'text', required: true } )
+		).toBe( 'This field is required' );
+		expect(
+			validateField( '<script>ignored()</script>', {
+				type: 'text',
+				required: true,
+			} )
+		).toBe( 'This field is required' );
+		expect(
+			validateField( '   <b>Hi</b>   ', { type: 'text', minLength: 3 } )
+		).toBe( 'Minimum 3 characters' );
+		expect(
+			validateField( ' \n\t ', { type: 'text', required: true } )
+		).toBe( 'This field is required' );
+		expect(
+			validateField( '&amp;', {
+				type: 'text',
+				minLength: 5,
+				maxLength: 5,
+			} )
+		).toBeNull();
+		expect(
+			validateField( 'A\nB', {
+				type: 'textarea',
+				minLength: 3,
+				maxLength: 3,
+			} )
+		).toBeNull();
+		expect(
+			validateField( '<b></b>', { type: 'richtext', required: true } )
+		).toBeNull();
+	} );
+
+	it( 'rejects malformed scalar and repeater shapes before generic array validation', () => {
+		for ( const value of [ [ 'hello' ], {}, false, 12 ] ) {
+			expect( validateField( value, { type: 'text' } ) ).toBe(
+				'Invalid field value'
+			);
+		}
+		expect( validateField( 12, { type: 'select' } ) ).toBeNull();
+		for ( const value of [ 'invalid', {}, [ 'invalid row' ] ] ) {
+			expect(
+				validateAll(
+					{ items: value },
+					createSchema( { items: { type: 'repeater', fields: {} } } ),
+					evaluateCondition
+				)
+			).toEqual( { items: 'Invalid field value' } );
+		}
+	} );
+
+	it( 'treats an explicit null repeater as zero items without rejecting an optional value', () => {
+		expect( validateField( null, { type: 'repeater' } ) ).toBeNull();
+		expect(
+			validateField( null, { type: 'repeater', required: true } )
+		).toBe( 'This field is required' );
+		expect( validateField( null, { type: 'repeater', min: 1 } ) ).toBe(
+			'Minimum 1 items'
+		);
+		expect(
+			validateAll(
+				{ items: null },
+				createSchema( { items: { type: 'repeater', fields: {} } } ),
+				evaluateCondition
+			)
+		).toEqual( {} );
+		expect( validateField( '3foo', { type: 'text', min: 4 } ) ).toBeNull();
 	} );
 
 	it( 'fails open for invalid patterns and keeps global patterns stable', () => {

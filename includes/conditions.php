@@ -81,7 +81,7 @@ function defb_resolve_condition_value( array $values, string $path ): mixed {
 
 	foreach ( explode( '.', $path ) as $part ) {
 		if ( ! is_array( $current ) || ! array_key_exists( $part, $current ) ) {
-			return null;
+			return defb_condition_undefined();
 		}
 		$current = $current[ $part ];
 	}
@@ -89,23 +89,94 @@ function defb_resolve_condition_value( array $values, string $path ): mixed {
 	return $current;
 }
 
+function defb_condition_undefined(): object {
+	static $undefined;
+	return $undefined ??= new stdClass();
+}
+
 function defb_evaluate_condition_comparison( mixed $actual, array $rule ): bool {
-	$value    = $rule['value'] ?? null;
+	$value    = array_key_exists( 'value', $rule ) ? $rule['value'] : defb_condition_undefined();
 	$operator = $rule['operator'] ?? '===';
 
 	return match ( $operator ) {
 		'===', '==' => defb_condition_values_equal( $actual, $value ),
 		'!==', '!=' => ! defb_condition_values_equal( $actual, $value ),
-		'>'          => $actual > $value,
-		'<'          => $actual < $value,
-		'>='         => $actual >= $value,
-		'<='         => $actual <= $value,
+		'>', '<', '>=', '<=' => defb_condition_values_compare( $actual, $value, $operator ),
 		'in'         => is_array( $value ) && defb_condition_array_contains( $value, $actual ),
 		'contains'   => is_string( $actual ) && is_string( $value ) && str_contains( $actual, $value ),
-		'empty'      => defb_is_empty_value( $actual ),
-		'!empty'     => ! defb_is_empty_value( $actual ),
+		'empty'      => defb_condition_value_is_empty( $actual ),
+		'!empty'     => ! defb_condition_value_is_empty( $actual ),
 		default      => defb_condition_values_equal( $actual, $value ),
 	};
+}
+
+function defb_condition_values_compare( mixed $left, mixed $right, string $operator ): bool {
+	$left  = defb_condition_to_primitive( $left );
+	$right = defb_condition_to_primitive( $right );
+
+	if ( is_string( $left ) && is_string( $right ) ) {
+		$comparison = strcmp( $left, $right );
+		$left       = $comparison;
+		$right      = 0;
+	} else {
+		$left  = defb_condition_to_number( $left );
+		$right = defb_condition_to_number( $right );
+	}
+
+	return match ( $operator ) {
+		'>'  => $left > $right,
+		'<'  => $left < $right,
+		'>=' => $left >= $right,
+		'<=' => $left <= $right,
+	};
+}
+
+function defb_condition_to_primitive( mixed $value ): mixed {
+	if ( ! is_array( $value ) ) {
+		return $value;
+	}
+	if ( ! array_is_list( $value ) ) {
+		return '[object Object]';
+	}
+
+	return implode( ',', array_map( static function ( mixed $item ): string {
+		if ( $item === null || $item === defb_condition_undefined() ) {
+			return '';
+		}
+		if ( is_bool( $item ) ) {
+			return $item ? 'true' : 'false';
+		}
+		return (string) defb_condition_to_primitive( $item );
+	}, $value ) );
+}
+
+function defb_condition_to_number( mixed $value ): float {
+	$value = defb_condition_to_primitive( $value );
+	if ( $value === null || is_bool( $value ) || is_int( $value ) || is_float( $value ) ) {
+		return (float) $value;
+	}
+	if ( ! is_string( $value ) ) {
+		return NAN;
+	}
+
+	$value = preg_replace( '/^[\s\x{FEFF}]+|[\s\x{FEFF}]+$/u', '', $value ) ?? $value;
+	if ( $value === '' ) {
+		return 0.0;
+	}
+	if ( in_array( $value, [ 'Infinity', '+Infinity', '-Infinity' ], true ) ) {
+		return $value === '-Infinity' ? -INF : INF;
+	}
+	foreach ( [ 16 => '/^0x[0-9a-f]+$/i', 8 => '/^0o[0-7]+$/i', 2 => '/^0b[01]+$/i' ] as $base => $pattern ) {
+		if ( preg_match( $pattern, $value ) ) {
+			return (float) base_convert( substr( $value, 2 ), $base, 10 );
+		}
+	}
+
+	return is_numeric( $value ) ? (float) $value : NAN;
+}
+
+function defb_condition_value_is_empty( mixed $value ): bool {
+	return $value === defb_condition_undefined() || defb_is_empty_value( $value );
 }
 
 function defb_condition_values_equal( mixed $left, mixed $right ): bool {
@@ -121,7 +192,7 @@ function defb_condition_to_boolean( mixed $value ): bool {
 		return true;
 	}
 
-	if ( $value === null || $value === false || $value === '' || $value === 0 || $value === 0.0 ) {
+	if ( $value === defb_condition_undefined() || $value === null || $value === false || $value === '' || $value === 0 || $value === 0.0 ) {
 		return false;
 	}
 
@@ -255,7 +326,7 @@ function defb_parse_condition_or( array $tokens, int &$position, array $values )
 	while ( defb_condition_token_matches( $tokens, $position, 'operator', '||' ) ) {
 		$position++;
 		$right  = defb_parse_condition_and( $tokens, $position, $values );
-		$result = defb_condition_to_boolean( $result ) || defb_condition_to_boolean( $right );
+		$result = defb_condition_to_boolean( $result ) ? $result : $right;
 	}
 
 	return $result;
@@ -267,7 +338,7 @@ function defb_parse_condition_and( array $tokens, int &$position, array $values 
 	while ( defb_condition_token_matches( $tokens, $position, 'operator', '&&' ) ) {
 		$position++;
 		$right  = defb_parse_condition_comparison( $tokens, $position, $values );
-		$result = defb_condition_to_boolean( $result ) && defb_condition_to_boolean( $right );
+		$result = defb_condition_to_boolean( $result ) ? $right : $result;
 	}
 
 	return $result;
@@ -291,7 +362,7 @@ function defb_parse_condition_comparison( array $tokens, int &$position, array $
 
 	if ( $operator === 'empty' ) {
 		$position++;
-		return defb_is_empty_value( $left );
+		return defb_condition_value_is_empty( $left );
 	}
 
 	if (
@@ -299,7 +370,7 @@ function defb_parse_condition_comparison( array $tokens, int &$position, array $
 		defb_condition_token_matches( $tokens, $position + 1, 'operator', 'empty' )
 	) {
 		$position += 2;
-		return ! defb_is_empty_value( $left );
+		return ! defb_condition_value_is_empty( $left );
 	}
 
 	if ( $operator === 'in' || $operator === 'contains' ) {
@@ -353,7 +424,7 @@ function defb_parse_condition_unary( array $tokens, int &$position, array $value
 
 	if ( defb_condition_token_matches( $tokens, $position, 'operator', '-' ) ) {
 		$position++;
-		return -(float) defb_parse_condition_primary( $tokens, $position, $values );
+		return -defb_condition_to_number( defb_parse_condition_primary( $tokens, $position, $values ) );
 	}
 
 	return defb_parse_condition_primary( $tokens, $position, $values );
